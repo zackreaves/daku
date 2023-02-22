@@ -1,3 +1,5 @@
+CREATE DATABASE daku_scorekeeper
+
 CREATE TABLE players {
   id SERIAL PRIMARY KEY,
   namef VARCHAR(80),
