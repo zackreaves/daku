@@ -1,9 +1,9 @@
-CREATE DATABASE daku_scorekeeper
+--CREATE DATABASE daku_scorekeeper
 
-CREATE TABLE players {
+CREATE TABLE players (
   id SERIAL PRIMARY KEY,
   namef VARCHAR(80),
-};
+);
 
 CREATE TABLE games (
   id SERIAL PRIMARY KEY,
@@ -24,4 +24,5 @@ CREATE TABLE player_data (
   round_id INTEGER REFERENCES round_data(id),
   player_id INTEGER REFERENCES players(id),
   wins INTEGER,
+  score INTEGER,
 )
