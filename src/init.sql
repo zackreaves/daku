@@ -1,28 +1,27 @@
-CREATE DATABASE daku_scorekeeper
-
-CREATE TABLE players (
-  id SERIAL PRIMARY KEY,
-  namef VARCHAR(80),
+CREATE TABLE IF NOT EXISTS "players" (
+  "id" INTEGER PRIMARY KEY NOT NULL,
+  "name_first" VARCHAR(80)
 );
 
-CREATE TABLE games (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(80),
-  ties BOOLEAN,
+CREATE TABLE IF NOT EXISTS "games" (
+  "id" INTEGER PRIMARY KEY NOT NULL,
+  "name" VARCHAR(80),
+  "ties_possible" BOOLEAN,
+  "score_kept" BOOLEAN
 );
 
-CREATE TABLE round_data (
-  id SERIAL PRIMARY KEY,
-  player_id INTEGER REFERENCES players(id),
-  round_count INTEGER, -- FIXME: Add some automated logic that sums the rounds based on player data.
-  ties INTEGER NULL,
-  player_count INTEGER,
-  -- FIXME: Add date and time.
+CREATE TABLE IF NOT EXISTS "round_data" (
+  "id" INTEGER PRIMARY KEY NOT NULL,
+  FOREIGN KEY("game_id") REFERENCES games("id"),
+  "round_count" INTEGER,
+  "player_count" INTEGER,
+  "ties" INTEGER NULL,
+  "date_time" DATETIME
 );
 
-CREATE TABLE player_data (
-  round_id INTEGER REFERENCES round_data(id),
-  player_id INTEGER REFERENCES players(id),
-  wins INTEGER,
-  score INTEGER,
-)
+CREATE TABLE IF NOT EXISTS "player_data" (
+  FOREIGN KEY("round_id") REFERENCES round_data("id"),
+  FOREIGN KEY("player_id") REFERENCES players("id"),
+  "wins" INTEGER NOT NULL,
+  "score" INTEGER NULL
+);
