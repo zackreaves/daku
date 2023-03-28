@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS "round_data" (
   FOREIGN KEY("game_id") REFERENCES games("id"),
   "round_count" INTEGER,
   "player_count" INTEGER,
-  "ties" INTEGER NULL,
+  "ties" INTEGER FALSE,
   "date_time" DATETIME
 );
 
