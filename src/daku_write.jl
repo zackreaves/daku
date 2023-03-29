@@ -31,5 +31,9 @@ function db_ins_prompt(db_path::String)
 	round_count = sum(player_wins_arr)
 	todays_date = now()
 
-	DBInterface("INSERT INTO \"round_data\" (round_count,player_count,date_time,game_id)\nVALUES ($round_count,$player_count,$todays_date,$game")
+	DBInterface.execute("INSERT INTO \"round_data\" (round_count,player_count,date_time,game_id)\nVALUES ($round_count,$player_count,$todays_date,$game")
+
+	for i in 1:player_count
+		db_insert(db,"player_data","wins,player_id,round_id","$(player_wins_arr[i]),$(player_name_arr[i]),last_row_id(\"round_data\")")
+	end
 end
