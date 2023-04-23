@@ -35,9 +35,9 @@ function scoreimport(scorecsv::String) # Short term tool for importing data kept
     for i in 1:length(df)
 
         dt = daytime[i]
-        DBInterface.execute["INSERT "] # FIXME: finish this up.
+        DBInterface.execute["INSERT "] # FIXME: Add a complete insert statement.
         for k in 3:7
-            if k != missing
+            if df[k,i] != missing
                 [ name2num(k) df[k,i] ]
             end
         end
