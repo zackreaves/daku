@@ -1,7 +1,7 @@
 using DataFrames, SQLite, Dates
 
 function choose_name(table_column::DataFrame,selection_name::String)
-	println("Which $selection_name\?\n",table_column,"\nEnter associated number")
+	println("Which $selection_name?\n",table_column,"\nEnter associated number")
 	return parse(Int,readline())
 end
 
