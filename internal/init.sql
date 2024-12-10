@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS "games" (
   "id" INTEGER PRIMARY KEY NOT NULL,
   "name" VARCHAR(80),
   "ties_possible" BOOLEAN,
+	"tie_breakers" BOOLEAN,
   "score_kept" BOOLEAN
 );
 
@@ -15,13 +16,14 @@ CREATE TABLE IF NOT EXISTS "round_data" (
   FOREIGN KEY("game_id") REFERENCES games("id"),
   "round_count" INTEGER,
   "player_count" INTEGER,
-  "ties" INTEGER FALSE,
+  "ties" INTEGER NULL,
   "date_time" DATETIME
 );
 
 CREATE TABLE IF NOT EXISTS "player_data" (
+  "win" INTEGER NOT NULL,
+  "score" REAL NULL,
+	"round_number" INTEGER NULL,
   FOREIGN KEY("round_id") REFERENCES round_data("id"),
-  FOREIGN KEY("player_id") REFERENCES players("id"),
-  "wins" INTEGER NOT NULL,
-  "score" INTEGER NULL
+  FOREIGN KEY("player_id") REFERENCES players("id")
 );
