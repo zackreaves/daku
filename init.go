@@ -1,13 +1,13 @@
-package daku
+package main
 
 import (
 	"database/sql"
 	"log"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func init () {
-	db_loc := "daku.db"
+func Init (db_loc string) {
 	db, err := sql.Open("sqlite3", db_loc)
 
 	defer db.Close()
