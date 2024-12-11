@@ -36,5 +36,4 @@ func main () {
 	default:
 		fmt.Println("No argument given.")
 	}
-	fmt.Println(os.Args)
 }

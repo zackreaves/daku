@@ -7,20 +7,29 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+func error_check(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func Init (db_loc string) {
-	db, err := sql.Open("sqlite3", db_loc)
+	db, err_open := sql.Open("sqlite3", db_loc)
+
+	error_check(err_open)
 
 	defer db.Close()
 
-	db.Exec(`
+	_, err_players := db.Exec(`
 		CREATE TABLE IF NOT EXISTS "players" (
-			"id" INTEGER PRIMARY KEY NOT NULL,
+			"id" INTEGER PRIMARY KEY AUTOINCREMENT,
 			"name_first" VARCHAR(80)
 		);
 	`)
-	db.Exec(`
+	error_check(err_players)
+	_, err_games := db.Exec(`
 		CREATE TABLE IF NOT EXISTS "games" (
-			"id" INTEGER PRIMARY KEY NOT NULL,
+			"id" INTEGER PRIMARY KEY AUTOINCREMENT,
 			"name" VARCHAR(80),
 			"ties_possible" BOOLEAN,
 			"tie_breakers" BOOLEAN,
@@ -28,19 +37,24 @@ func Init (db_loc string) {
 			"round_extensions" BOOLEAN
 		);
 	`)
+	error_check(err_games)
 	// FIXME: Add extra columns to layout.
-	db.Exec(`
+	_, err_round_data := db.Exec(`
 		CREATE TABLE IF NOT EXISTS "round_data" (
-		  "id" INTEGER PRIMARY KEY NOT NULL,
-		  FOREIGN KEY("game_id") REFERENCES games("id"),
-		  "round_count" INTEGER,
-		  "player_count" INTEGER,
+		  "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+			"game_id" INTEGER NOT NULL,
+		  "round_count" INTEGER NOT NULL,
+		  "player_count" INTEGER NOT NULL,
 		  "ties" INTEGER NULL,
-		  "date_time" TEXT
+		  "date_time" TEXT,
+		  FOREIGN KEY("game_id") REFERENCES games("id")
 		);
 	`)
-	db.Exec(`
+	error_check(err_round_data)
+	_, err_player_data := db.Exec(`
 		CREATE TABLE IF NOT EXISTS "player_data" (
+			"round_id" INTEGER NOT NULL,
+			"player_id" INTEGER NOT NULL,
 		  "win" INTEGER NOT NULL,
 		  "score" REAL NULL,
 			"tie" BOOLEAN NULL,
@@ -49,10 +63,8 @@ func Init (db_loc string) {
 		  FOREIGN KEY("player_id") REFERENCES players("id")
 		);
 	`)
+	error_check(err_player_data)
 
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	return
 }
