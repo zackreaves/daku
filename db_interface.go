@@ -68,3 +68,17 @@ func Init (db_loc string) {
 
 	return
 }
+
+func Exec(db_loc string, query string) sql.Result {
+	db, err_open := sql.Open("sqlite3",db_loc)
+
+	error_check(err_open)
+
+	defer db.Close()
+
+	result, err_query := db.Exec(query)
+
+	error_check(err_query)
+
+	return result
+}
