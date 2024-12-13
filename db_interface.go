@@ -7,7 +7,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func error_check(err error) {
+func Error_check(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -16,7 +16,7 @@ func error_check(err error) {
 func Init (db_loc string) {
 	db, err_open := sql.Open("sqlite3", db_loc)
 
-	error_check(err_open)
+	Error_check(err_open)
 
 	defer db.Close()
 
@@ -26,7 +26,7 @@ func Init (db_loc string) {
 			"name_first" VARCHAR(80)
 		);
 	`)
-	error_check(err_players)
+	Error_check(err_players)
 	_, err_games := db.Exec(`
 		CREATE TABLE IF NOT EXISTS "games" (
 			"id" INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,7 +37,7 @@ func Init (db_loc string) {
 			"round_extensions" BOOLEAN
 		);
 	`)
-	error_check(err_games)
+	Error_check(err_games)
 	// FIXME: Add extra columns to layout.
 	_, err_round_data := db.Exec(`
 		CREATE TABLE IF NOT EXISTS "round_data" (
@@ -50,7 +50,7 @@ func Init (db_loc string) {
 		  FOREIGN KEY("game_id") REFERENCES games("id")
 		);
 	`)
-	error_check(err_round_data)
+	Error_check(err_round_data)
 	_, err_player_data := db.Exec(`
 		CREATE TABLE IF NOT EXISTS "player_data" (
 			"round_id" INTEGER NOT NULL,
@@ -63,7 +63,7 @@ func Init (db_loc string) {
 		  FOREIGN KEY("player_id") REFERENCES players("id")
 		);
 	`)
-	error_check(err_player_data)
+	Error_check(err_player_data)
 
 
 	return
@@ -72,13 +72,13 @@ func Init (db_loc string) {
 func Exec(db_loc string, query string) sql.Result {
 	db, err_open := sql.Open("sqlite3",db_loc)
 
-	error_check(err_open)
+	Error_check(err_open)
 
 	defer db.Close()
 
 	result, err_query := db.Exec(query)
 
-	error_check(err_query)
+	Error_check(err_query)
 
 	return result
 }
