@@ -41,10 +41,20 @@ func main () {
 		fmt.Println(db_loc)
 	case "query":
 		db_loc := arg_flags(os.Args[3:])
-		Exec(db_loc, os.Args[2])
+		res := Exec(db_loc, os.Args[2])
+		fmt.Println(res)
 	case "sqlite":
 		db_loc := arg_flags(os.Args[2:])
-		exec.Command("sqlite3",db_loc)
+		res := exec.Command("sqlite3",db_loc)
+		fmt.Println(res)
+	case "add":
+		switch os.Args[2] {
+		case "game":
+			break
+		}
+	case "ngame": //FIXME: Prompt doesn't work.
+		db_loc := arg_flags(os.Args[2:])
+		Add_to_db_prompt(db_loc)
 	default:
 		fmt.Println("No argument given.")
 	}

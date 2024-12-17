@@ -9,7 +9,7 @@ func new_game (name string, ties uint8, tie_breakers uint8, scoring uint8, exten
 	return sql_stmt	
 }
 
-type round_data struct {
+type Round_data struct {
 	rounds uint
 	ties uint
 	datetime string
@@ -17,7 +17,7 @@ type round_data struct {
 	player_count uint
 }
 
-type player_data struct {
+type Player_data struct {
 	name string
 	points float64
 	win uint8 // should be bool
@@ -75,7 +75,7 @@ func Add_to_db_prompt (db_loc string) {
 		score_bool, err := yn_to_bool(scoring)
 		Error_check(err)
 		fmt.Println("Does the game allow for extensions on existing matches? [y/n]")
-		_,err = fmt.Scanln(extensions)
+		_,err = fmt.Scanln(&extensions)
 		Error_check(err)
 		extensions_bool, err := yn_to_bool(extensions)
 

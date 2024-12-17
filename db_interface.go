@@ -7,6 +7,34 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+type Players struct {
+	name_first string
+}
+
+type Games struct {
+	name string
+	ties_possible uint8
+	tie_breakers uint8
+	score_kept uint8
+	extensions uint8
+}
+
+type Round_data struct {
+	rounds uint
+	ties uint
+	datetime string
+	game string
+	player_count uint
+}
+
+type Player_data struct {
+	name string
+	points float64
+	win uint8 // should be bool
+	ties uint
+	round_number uint
+}
+
 func Error_check(err error) {
 	if err != nil {
 		log.Fatal(err)
@@ -14,7 +42,7 @@ func Error_check(err error) {
 }
 
 func Init (db_loc string) {
-	db, err_open := sql.Open("sqlite3", db_loc)
+	db, err_open := sql.Open("sqlite3","file:" + db_loc + "?_foreign_keys=true")
 
 	Error_check(err_open)
 
@@ -58,7 +86,7 @@ func Init (db_loc string) {
 		  "win" INTEGER NOT NULL,
 		  "score" REAL NULL,
 			"tie" BOOLEAN NULL,
-			"round_number" INTEGER NULL,
+			"round_number" INTEGER NOT NULL,
 		  FOREIGN KEY("round_id") REFERENCES round_data("id"),
 		  FOREIGN KEY("player_id") REFERENCES players("id")
 		);
@@ -70,13 +98,27 @@ func Init (db_loc string) {
 }
 
 func Exec(db_loc string, query string) sql.Result {
-	db, err_open := sql.Open("sqlite3",db_loc)
+	db, err_open := sql.Open("sqlite3","file:" + db_loc + "?_foreign_keys=true")
 
 	Error_check(err_open)
 
 	defer db.Close()
 
 	result, err_query := db.Exec(query)
+
+	Error_check(err_query)
+
+	return result
+}
+
+func Query(db_loc string, query string) *sql.Rows {
+	db, err_open := sql.Open("sqlite3","file:" + db_loc + "?_foreign_keys=true")
+
+	Error_check(err_open)
+
+	defer db.Close()
+
+	result, err_query := db.Query(query)
 
 	Error_check(err_query)
 
