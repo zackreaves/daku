@@ -9,23 +9,7 @@ func new_game (name string, ties uint8, tie_breakers uint8, scoring uint8, exten
 	return sql_stmt	
 }
 
-type Round_data struct {
-	rounds uint
-	ties uint
-	datetime string
-	game string
-	player_count uint
-}
-
-type Player_data struct {
-	name string
-	points float64
-	win uint8 // should be bool
-	ties uint
-	round_number uint
-}
-
-func yn_to_bool (ans string) (uint8, error) { // Create a pseudo-bool for SQL.
+func yn_to_bool (ans string) (uint8, error) { // Create a 1/0 bool for SQL.
 	var (
 		err error
 		ans_conv uint8

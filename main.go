@@ -41,7 +41,7 @@ func main () {
 		fmt.Println(db_loc)
 	case "query":
 		db_loc := arg_flags(os.Args[3:])
-		res := Exec(db_loc, os.Args[2])
+		res := Query(db_loc, os.Args[2])
 		fmt.Println(res)
 	case "sqlite":
 		db_loc := arg_flags(os.Args[2:])
