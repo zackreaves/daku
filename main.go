@@ -37,7 +37,7 @@ func main () {
 	switch os.Args[1] {
 	case "init":
 		db_loc := arg_flags(os.Args[2:])
-		Init(db_loc)
+		Init_sqlite(db_loc)
 		fmt.Println(db_loc)
 	case "query":
 		db_loc := arg_flags(os.Args[3:])
