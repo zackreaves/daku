@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func Import_from_csv (csv_file string) [][]string {
+func Import_from_csv (csv_file string) ([][]string, int) {
 	file, err := os.Open(csv_file)
 	defer file.Close()
 	Error_check(err)
@@ -13,5 +13,5 @@ func Import_from_csv (csv_file string) [][]string {
 	file_arr, err := reader.ReadAll()
 	Error_check(err)
 
-	return file_arr
+	return file_arr, len(file_arr)
 }
