@@ -188,17 +188,32 @@ func Init (db_driver string, db_loc string) {
 		);
 	`)
 	Error_check(err_games)
-	_, err_match_data := db.Exec(`
-		CREATE TABLE IF NOT EXISTS "match_data" (
-			"id" INTEGER PRIMARY KEY AUTOINCREMENT,
-			"game_id" INTEGER NOT NULL,
-			"round_count" INTEGER NOT NULL,
-			"player_count" INTEGER NOT NULL,
-			"date_time" DATETIME,
-			FOREIGN KEY("game_id") REFERENCES games("id")
-		);
-	`)
-	Error_check(err_match_data)
+
+	if db_driver == "sqlite3" {
+		_, err_match_data := db.Exec(`
+			CREATE TABLE IF NOT EXISTS "match_data" (
+				"id" INTEGER PRIMARY KEY AUTOINCREMENT,
+				"game_id" INTEGER NOT NULL,
+				"round_count" INTEGER NOT NULL,
+				"player_count" INTEGER NOT NULL,
+				"date_time" DATETIME DEFAULT datetime('now'),
+				FOREIGN KEY("game_id") REFERENCES games("id")
+			);
+		`)
+		Error_check(err_match_data)
+	} else {
+		_, err_match_data := db.Exec(`
+			CREATE TABLE IF NOT EXISTS "match_data" (
+				"id" INTEGER PRIMARY KEY AUTOINCREMENT,
+				"game_id" INTEGER NOT NULL,
+				"round_count" INTEGER NOT NULL,
+				"player_count" INTEGER NOT NULL,
+				"date_time" DATETIME DEFAULT NOW(),
+				FOREIGN KEY("game_id") REFERENCES games("id")
+			);
+		`)
+		Error_check(err_match_data)
+	}
 	_, err_player_data := db.Exec(`
 		CREATE TABLE IF NOT EXISTS "player_data" (
 			"match_id" INTEGER NOT NULL,

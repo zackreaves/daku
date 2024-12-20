@@ -54,55 +54,43 @@ func main () {
 		db_loc := arg_flags(os.Args[4:])
 		switch os.Args[2] {
 		case "players":
-			fmt.Println(os.Args)
 			csv_arr, rows := Import_from_csv(os.Args[3])
-			fmt.Println(csv_arr, db_loc)
 			format := csv_arr[0][:]
 			csv_args := csv_arr[1:][:]
 			t := Players{}
 			tp := &t
 			for i := 0; i < rows-1 ; i++ {
-				args := csv_args[i][:]
-				Populate_from_arguments(args, format, tp)
+				Populate_from_arguments(csv_args[i], format, tp)
 				Insert_from_table("sqlite3",db_loc,tp)
 			}
 		case "games":
-			fmt.Println(os.Args)
 			csv_arr, rows := Import_from_csv(os.Args[3])
-			fmt.Println(csv_arr, db_loc)
 			format := csv_arr[0][:]
 			csv_args := csv_arr[1:][:]
 			t := Games{}
 			tp := &t
 			for i := 0; i < rows-1 ; i++ {
-				args := csv_args[i][:]
-				Populate_from_arguments(args, format, tp)
+				Populate_from_arguments(csv_args[i], format, tp)
 				Insert_from_table("sqlite3",db_loc,tp)
 			}
 		case "match_data":
-			fmt.Println(os.Args)
 			csv_arr, rows := Import_from_csv(os.Args[3])
-			fmt.Println(csv_arr, db_loc)
 			format := csv_arr[0][:]
 			csv_args := csv_arr[1:][:]
 			t := Match_data{}
 			tp := &t
 			for i := 0; i < rows-1 ; i++ {
-				args := csv_args[i][:]
-				Populate_from_arguments(args, format, tp)
+				Populate_from_arguments(csv_args[i], format, tp)
 				Insert_from_table("sqlite3",db_loc,tp)
 			}
 		case "player_data":
-			fmt.Println(os.Args)
 			csv_arr, rows := Import_from_csv(os.Args[3])
-			fmt.Println(csv_arr, db_loc)
 			format := csv_arr[0][:]
 			csv_args := csv_arr[1:][:]
 			t := Player_data{}
 			tp := &t
 			for i := 0; i < rows-1 ; i++ {
-				args := csv_args[i][:]
-				Populate_from_arguments(args, format, tp)
+				Populate_from_arguments(csv_args[i], format, tp)
 				Insert_from_table("sqlite3",db_loc,tp)
 			}
 		}
