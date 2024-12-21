@@ -1,7 +1,7 @@
 BINARY_NAME=daku
 
 .PHONY: all
-all: main
+all: main deps
 
 deps:
 	go get github.com/mattn/go-sqlite3 
