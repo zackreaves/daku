@@ -138,6 +138,9 @@ func (p *Player_data) Populate_from_args (args []string, format []string) {
 		case "round_number":
 			vuint,_ := strconv.ParseUint(args[i],10,64)
 			p.round_number = uint(vuint)
+		case "win":
+			vbool,_ := strconv.ParseBool(args[i])
+			p.win = vbool
 		}
 	}
 }
