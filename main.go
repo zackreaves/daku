@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/exec"
 )
 
 func arg_flags (arguments []string) string {
@@ -43,10 +42,6 @@ func main () {
 		db_loc := arg_flags(os.Args[3:])
 		res := Query(db_loc, os.Args[2])
 		fmt.Println(res)
-	case "sqlite":
-		db_loc := arg_flags(os.Args[2:])
-		res := exec.Command("sqlite3",db_loc)
-		fmt.Println(res)
 	case "ngame": //FIXME: Prompt doesn't work.
 		db_loc := arg_flags(os.Args[2:])
 		Add_to_db_prompt(db_loc)
@@ -60,7 +55,7 @@ func main () {
 			t := Players{}
 			tp := &t
 			for i := 0; i < rows-1 ; i++ {
-				Populate_from_arguments(csv_args[i], format, tp)
+				Populate_from_arguments(csv_args[i], format, tp) //FIXME AND ALL LIKE INSTANCES: INTERFACE UNNECESSARY AND RESULTING FUNCTIONS ARE UNNECESSARY OR NEED A REVISED IMPLEMENTATION.
 				Insert_from_table("sqlite3",db_loc,tp)
 			}
 		case "games":

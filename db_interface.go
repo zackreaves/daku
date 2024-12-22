@@ -160,6 +160,29 @@ func Insert_from_table (db_driver string, db_loc string, t Table) (sql.Result, e
 	return t.Insert(db_driver, db_loc)
 }
 
+func Match_populate (matches_csv string, players_csv string) ([]Match_data, []Player_data) {
+	match_arr, match_rows := Import_from_csv(matches_csv)
+	player_arr, player_rows := Import_from_csv(players_csv)
+	matches := make([]Match_data,match_rows)
+	players := make([]Player_data,match_rows)
+
+	match_format := match_arr[0]
+	match_args := match_arr[1:]
+
+	for i := 0; i < match_rows-1; i++ {
+		matches[i].Populate_from_args(match_args[i],match_format)
+	}
+
+	player_format := player_arr[0]
+	player_args := player_arr[1:]
+
+	for i := 0; i < player_rows-1; i++ {
+		players[i].Populate_from_args(player_args[i],player_format)
+	}
+
+	return matches, players
+}
+
 func Error_check(err error) {
 	if err != nil {
 		log.Fatal(err)
