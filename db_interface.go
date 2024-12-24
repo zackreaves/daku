@@ -183,6 +183,17 @@ func Match_populate (matches_csv string, players_csv string) ([]Match_data, []Pl
 	return matches, players
 }
 
+func Match_sort_insert (db_driver string, db_loc string, matches []Match_data, players []Player_data) {
+	for i := 0; i < len(matches); i++ {
+		matches[i].Insert(db_driver,db_loc)
+		for j := 0; j < len(players); j++ {
+			if players[j].match_id == matches[i].id {
+				players[j].Insert(db_driver,db_loc)
+			}
+		}
+	}
+}
+
 func Error_check(err error) {
 	if err != nil {
 		log.Fatal(err)
@@ -196,64 +207,90 @@ func Init (db_driver string, db_loc string) {
 
 	defer db.Close()
 
-	_, err_players := db.Exec(`
-		CREATE TABLE IF NOT EXISTS "players" (
-			"id" INTEGER PRIMARY KEY AUTOINCREMENT,
-			"name_first" VARCHAR(80)
-		);
-	`)
-	Error_check(err_players)
-	_, err_games := db.Exec(`
-		CREATE TABLE IF NOT EXISTS "games" (
-			"id" INTEGER PRIMARY KEY AUTOINCREMENT,
-			"name" VARCHAR(80),
-			"ties_possible" BOOLEAN,
-			"tie_breakers" BOOLEAN,
-			"score_kept" BOOLEAN,
-			"round_extensions" BOOLEAN
-		);
-	`)
-	Error_check(err_games)
-
 	if db_driver == "sqlite3" {
+		_, err_players := db.Exec(`
+			CREATE TABLE IF NOT EXISTS "players" (
+				"id" INTEGER PRIMARY KEY AUTOINCREMENT,
+				"name_first" VARCHAR(80)
+			);
+		`)
+		Error_check(err_players)
+		_, err_games := db.Exec(`
+			CREATE TABLE IF NOT EXISTS "games" (
+				"id" INTEGER PRIMARY KEY AUTOINCREMENT,
+				"name" VARCHAR(80),
+				"ties_possible" BOOLEAN,
+				"tie_breakers" BOOLEAN,
+				"score_kept" BOOLEAN,
+				"round_extensions" BOOLEAN
+			);
+		`)
+		Error_check(err_games)
 		_, err_match_data := db.Exec(`
 			CREATE TABLE IF NOT EXISTS "match_data" (
 				"id" INTEGER PRIMARY KEY AUTOINCREMENT,
 				"game_id" INTEGER NOT NULL,
 				"round_count" INTEGER NOT NULL,
 				"player_count" INTEGER NOT NULL,
-				"date_time" DATETIME DEFAULT datetime('now'),
+				"date_time" DATETIME DEFAULT (datetime('now','localtime')),
 				FOREIGN KEY("game_id") REFERENCES games("id")
 			);
 		`)
 		Error_check(err_match_data)
+		_, err_player_data := db.Exec(`
+			CREATE TABLE IF NOT EXISTS "player_data" (
+				"match_id" INTEGER DEFAULT (SELECT last_insert_rowid FROM match_data),
+				"player_id" INTEGER NOT NULL,
+				"win" BOOLEAN NULL,
+				"score" REAL NULL,
+				"tie" BOOLEAN NULL,
+				"round_number" INTEGER DEFAULT 1,
+				FOREIGN KEY("match_id") REFERENCES match_data("id"),
+				FOREIGN KEY("player_id") REFERENCES players("id")
+			);
+		`)
+		Error_check(err_player_data)
 	} else {
+		_, err_players := db.Exec(`
+			CREATE TABLE IF NOT EXISTS "players" (
+				"id" SERIAL PRIMARY KEY,
+				"name_first" VARCHAR(80)
+			);
+		`)
+		Error_check(err_players)
+		_, err_games := db.Exec(`
+			CREATE TABLE IF NOT EXISTS "games" (
+				"id" SERIAL PRIMARY KEY,
+				"name" VARCHAR(80),
+				"ties_possible" BOOLEAN,
+				"tie_breakers" BOOLEAN,
+				"score_kept" BOOLEAN,
+				"round_extensions" BOOLEAN
+			);
+		`)
+		Error_check(err_games)
 		_, err_match_data := db.Exec(`
 			CREATE TABLE IF NOT EXISTS "match_data" (
-				"id" INTEGER PRIMARY KEY AUTOINCREMENT,
-				"game_id" INTEGER NOT NULL,
+				"id" SERIAL PRIMARY KEY, 
+				"game_id" INTEGER REFERENCES games('id'),
 				"round_count" INTEGER NOT NULL,
 				"player_count" INTEGER NOT NULL,
-				"date_time" DATETIME DEFAULT NOW(),
-				FOREIGN KEY("game_id") REFERENCES games("id")
+				"date_time" DATETIME DEFAULT NOW()
 			);
 		`)
 		Error_check(err_match_data)
+		_, err_player_data := db.Exec(`
+			CREATE TABLE IF NOT EXISTS "player_data" (
+				"match_id" INTEGER REFERENCES match_data('id') DEFAULT (SELECT lastval() FROM match_data),
+				"player_id" INTEGER REFERENCES players('id') NOT NULL,
+				"win" BOOLEAN NULL,
+				"score" REAL NULL,
+				"tie" BOOLEAN NULL,
+				"round_number" INTEGER DEFAULT 1
+			);
+		`)
+		Error_check(err_player_data)
 	}
-	_, err_player_data := db.Exec(`
-		CREATE TABLE IF NOT EXISTS "player_data" (
-			"match_id" INTEGER NOT NULL,
-			"player_id" INTEGER NOT NULL,
-			"win" BOOLEAN NULL,
-			"score" REAL NULL,
-			"tie" BOOLEAN NULL,
-			"round_number" INTEGER DEFAULT 1,
-			FOREIGN KEY("match_id") REFERENCES match_data("id"),
-			FOREIGN KEY("player_id") REFERENCES players("id")
-		);
-	`)
-	Error_check(err_player_data)
-
 }
 
 func Exec(db_loc string, query string) sql.Result {
