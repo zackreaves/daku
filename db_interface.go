@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq"
 )
 
 type Table interface {
