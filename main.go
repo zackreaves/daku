@@ -17,7 +17,7 @@ func arg_flags (arguments []string) string {
 		arg_flags.Parse(arguments)
 
 	if *db_override == "" {
-		db_env, db_env_defined = os.LookupEnv("DAKU_DB")
+		db_env, db_env_defined = os.LookupEnv("DAKU_DB_ADDRESS")
 		if db_env_defined {
 			db_env += "/DAKU.db"
 		} else {
@@ -57,8 +57,8 @@ func main () {
 		switch os.Args[2] {
 		case "players":
 			csv_arr, rows := Import_from_csv(os.Args[3])
-			format := csv_arr[0][:]
-			csv_args := csv_arr[1:][:]
+			format := csv_arr[0]
+			csv_args := csv_arr[1:]
 			t := Players{}
 			tp := &t
 			for i := 0; i < rows-1 ; i++ {
@@ -67,8 +67,8 @@ func main () {
 			}
 		case "games":
 			csv_arr, rows := Import_from_csv(os.Args[3])
-			format := csv_arr[0][:]
-			csv_args := csv_arr[1:][:]
+			format := csv_arr[0]
+			csv_args := csv_arr[1:]
 			t := Games{}
 			tp := &t
 			for i := 0; i < rows-1 ; i++ {
@@ -77,8 +77,8 @@ func main () {
 			}
 		case "match_data":
 			csv_arr, rows := Import_from_csv(os.Args[3])
-			format := csv_arr[0][:]
-			csv_args := csv_arr[1:][:]
+			format := csv_arr[0]
+			csv_args := csv_arr[1:]
 			t := Match_data{}
 			tp := &t
 			for i := 0; i < rows-1 ; i++ {
@@ -87,8 +87,8 @@ func main () {
 			}
 		case "player_data":
 			csv_arr, rows := Import_from_csv(os.Args[3])
-			format := csv_arr[0][:]
-			csv_args := csv_arr[1:][:]
+			format := csv_arr[0]
+			csv_args := csv_arr[1:]
 			t := Player_data{}
 			tp := &t
 			for i := 0; i < rows-1 ; i++ {
