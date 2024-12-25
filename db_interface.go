@@ -75,7 +75,7 @@ func (g Games) Insert (db_driver string, db_loc string) (sql.Result, error) {
 	result, err_exec := db.Exec("INSERT INTO games (name,ties_possible,tie_breakers,score_kept,extensions) VALUES ($1,$2,$3,$4,$5);",g.name,g.ties_possible,g.tie_breakers,g.score_kept,g.extensions)
 
 
-	return result, fmt.Errorf("Games INSERT Failed: \n%w \n%w\n", err_open, err_exec)
+	return result, fmt.Errorf("Games INSERT Failed: \n%w\n%w\n", err_open, err_exec)
 }
 
 type Match_data struct {
@@ -202,13 +202,13 @@ func Error_check(err error) {
 }
 
 func Init (db_driver string, db_loc string) {
+	if db_driver == "sqlite3" {
 	db, err_open := sql.Open(db_driver,"file:" + db_loc + "?_foreign_keys=true")
 
 	Error_check(err_open)
 
 	defer db.Close()
 
-	if db_driver == "sqlite3" {
 		_, err_players := db.Exec(`
 			CREATE TABLE IF NOT EXISTS "players" (
 				"id" INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -252,14 +252,17 @@ func Init (db_driver string, db_loc string) {
 		`)
 		Error_check(err_player_data)
 	} else {
-		_, err_players := db.Exec(`
+		db, err_open := sql.Open(db_driver,db_loc)
+
+		Error_check(err_open)
+
+		defer db.Close()
+
+		_, err_exec := db.Exec(`
 			CREATE TABLE IF NOT EXISTS "players" (
 				"id" SERIAL PRIMARY KEY,
 				"name_first" VARCHAR(80)
 			);
-		`)
-		Error_check(err_players)
-		_, err_games := db.Exec(`
 			CREATE TABLE IF NOT EXISTS "games" (
 				"id" SERIAL PRIMARY KEY,
 				"name" VARCHAR(80),
@@ -268,9 +271,6 @@ func Init (db_driver string, db_loc string) {
 				"score_kept" BOOLEAN,
 				"round_extensions" BOOLEAN
 			);
-		`)
-		Error_check(err_games)
-		_, err_match_data := db.Exec(`
 			CREATE TABLE IF NOT EXISTS "match_data" (
 				"id" SERIAL PRIMARY KEY, 
 				"game_id" INTEGER REFERENCES games('id'),
@@ -278,9 +278,6 @@ func Init (db_driver string, db_loc string) {
 				"player_count" INTEGER NOT NULL,
 				"date_time" DATETIME DEFAULT NOW()
 			);
-		`)
-		Error_check(err_match_data)
-		_, err_player_data := db.Exec(`
 			CREATE TABLE IF NOT EXISTS "player_data" (
 				"match_id" INTEGER REFERENCES match_data('id') DEFAULT (SELECT lastval() FROM match_data),
 				"player_id" INTEGER REFERENCES players('id') NOT NULL,
@@ -290,7 +287,7 @@ func Init (db_driver string, db_loc string) {
 				"round_number" INTEGER DEFAULT 1
 			);
 		`)
-		Error_check(err_player_data)
+		Error_check(err_exec)
 	}
 }
 

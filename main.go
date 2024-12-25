@@ -31,20 +31,27 @@ func arg_flags (arguments []string) string {
 
 	return db_env
 }
+func sql_chooser () string {
+	sql_choice := os.Getenv("DAKU_SQL_SERVICE")
+
+	if sql_choice == "" {
+		sql_choice = "sqlite3"
+	}
+
+	return sql_choice
+}
 
 func main () {
+	db_driver := sql_chooser()
 	switch os.Args[1] {
 	case "init":
 		db_loc := arg_flags(os.Args[2:])
-		Init("sqlite3",db_loc)
+		Init(db_driver,db_loc)
 		fmt.Println(db_loc)
 	case "query":
 		db_loc := arg_flags(os.Args[3:])
 		res := Query(db_loc, os.Args[2])
 		fmt.Println(res)
-	case "ngame": //FIXME: Prompt doesn't work.
-		db_loc := arg_flags(os.Args[2:])
-		Add_to_db_prompt(db_loc)
 	case "csv":
 		db_loc := arg_flags(os.Args[4:])
 		switch os.Args[2] {
@@ -56,7 +63,7 @@ func main () {
 			tp := &t
 			for i := 0; i < rows-1 ; i++ {
 				Populate_from_arguments(csv_args[i], format, tp) //FIXME AND ALL LIKE INSTANCES: INTERFACE UNNECESSARY AND RESULTING FUNCTIONS ARE UNNECESSARY OR NEED A REVISED IMPLEMENTATION.
-				Insert_from_table("sqlite3",db_loc,tp)
+				Insert_from_table(db_driver,db_loc,tp)
 			}
 		case "games":
 			csv_arr, rows := Import_from_csv(os.Args[3])
@@ -66,7 +73,7 @@ func main () {
 			tp := &t
 			for i := 0; i < rows-1 ; i++ {
 				Populate_from_arguments(csv_args[i], format, tp)
-				Insert_from_table("sqlite3",db_loc,tp)
+				Insert_from_table(db_driver,db_loc,tp)
 			}
 		case "match_data":
 			csv_arr, rows := Import_from_csv(os.Args[3])
@@ -76,7 +83,7 @@ func main () {
 			tp := &t
 			for i := 0; i < rows-1 ; i++ {
 				Populate_from_arguments(csv_args[i], format, tp)
-				Insert_from_table("sqlite3",db_loc,tp)
+				Insert_from_table(db_driver,db_loc,tp)
 			}
 		case "player_data":
 			csv_arr, rows := Import_from_csv(os.Args[3])
@@ -86,7 +93,7 @@ func main () {
 			tp := &t
 			for i := 0; i < rows-1 ; i++ {
 				Populate_from_arguments(csv_args[i], format, tp)
-				Insert_from_table("sqlite3",db_loc,tp)
+				Insert_from_table(db_driver,db_loc,tp)
 			}
 		}
 	default:
