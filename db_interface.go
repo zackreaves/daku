@@ -202,7 +202,10 @@ func Error_check(err error) {
 }
 
 func Init (db_driver string, db_loc string) {
-	if db_driver == "sqlite3" {
+	fmt.Println(db_driver)
+	fmt.Println(db_loc)
+	switch db_driver {
+	case "sqlite3":
 	db, err_open := sql.Open(db_driver,"file:" + db_loc + "?_foreign_keys=true")
 
 	Error_check(err_open)
@@ -251,7 +254,7 @@ func Init (db_driver string, db_loc string) {
 			);
 		`)
 		Error_check(err_player_data)
-	} else {
+	case "postgres":
 		db, err_open := sql.Open(db_driver,db_loc)
 
 		Error_check(err_open)
@@ -279,7 +282,7 @@ func Init (db_driver string, db_loc string) {
 				"date_time" DATETIME DEFAULT NOW()
 			);
 			CREATE TABLE IF NOT EXISTS "player_data" (
-				"match_id" INTEGER REFERENCES match_data('id') DEFAULT (SELECT lastval() FROM match_data),
+				"match_id" INTEGER REFERENCES match_data('id'),
 				"player_id" INTEGER REFERENCES players('id') NOT NULL,
 				"win" BOOLEAN NULL,
 				"score" REAL NULL,
