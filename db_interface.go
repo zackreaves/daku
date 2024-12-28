@@ -276,14 +276,14 @@ func Init (db_driver string, db_loc string) {
 			);
 			CREATE TABLE IF NOT EXISTS "match_data" (
 				"id" SERIAL PRIMARY KEY, 
-				"game_id" INTEGER REFERENCES games('id'),
+				"game_id" INTEGER REFERENCES games(id),
 				"round_count" INTEGER NOT NULL,
 				"player_count" INTEGER NOT NULL,
-				"date_time" DATETIME DEFAULT NOW()
+				"date_time" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 			);
 			CREATE TABLE IF NOT EXISTS "player_data" (
-				"match_id" INTEGER REFERENCES match_data('id'),
-				"player_id" INTEGER REFERENCES players('id') NOT NULL,
+				"match_id" INTEGER REFERENCES match_data(id) ON DELETE CASCADE,
+				"player_id" INTEGER REFERENCES players(id),
 				"win" BOOLEAN NULL,
 				"score" REAL NULL,
 				"tie" BOOLEAN NULL,
@@ -291,10 +291,12 @@ func Init (db_driver string, db_loc string) {
 			);
 		`)
 		Error_check(err_exec)
+	default:
+		fmt.Println("Supported databases include postgres and sqlite3.\n You can set the database using the DAKU_SQL_SERVICE command.")
 	}
 }
 
-func Exec(db_loc string, query string) sql.Result {
+func Exec(db_loc string, query string) sql.Result { // FIXME: Doesn't allow for Postgres, might replace with a method that serves a similar function.
 	db, err_open := sql.Open("sqlite3","file:" + db_loc + "?_foreign_keys=true")
 
 	Error_check(err_open)
@@ -308,7 +310,7 @@ func Exec(db_loc string, query string) sql.Result {
 	return result
 }
 
-func Query(db_loc string, query string) *sql.Rows {
+func Query(db_loc string, query string) *sql.Rows { // FIXME: Doesn't allow for Postgres, might replace with a method that serves a similar function.
 	db, err_open := sql.Open("sqlite3","file:" + db_loc + "?_foreign_keys=true")
 
 	Error_check(err_open)
