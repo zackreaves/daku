@@ -49,12 +49,8 @@ func main () {
 	switch os.Args[1] {
 	case "init":
 		config.flags(os.Args[2:])
-		Init(config.db_driver,config.db_address)
+		Init(config)
 		fmt.Println(config.db_address)
-	case "query":
-		config.flags(os.Args[3:])
-		res := Query(config.db_address, os.Args[2])
-		fmt.Println(res)
 	case "csv":
 		config.flags(os.Args[4:])
 		Csv_insert(os.Args[3],os.Args[2])

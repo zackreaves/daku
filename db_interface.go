@@ -32,7 +32,7 @@ func (p *Players) Populate_from_args(args []string, format []string) {
 	}
 }
 
-func (p Players) Insert(db_driver string, db_loc string) (sql.Result, error) {
+func (p Players) Insert (db_driver string, db_loc string) (sql.Result, error) {
 	db, err_open := sql.Open(db_driver, db_loc)
 	defer db.Close()
 	result, err_exec := db.Exec("INSERT INTO players (name_first) VALUES ($1)", p.name_first)
@@ -161,7 +161,7 @@ func Insert_from_table (db_driver string, db_loc string, t Table) (sql.Result, e
 	return t.Insert(db_driver, db_loc)
 }
 
-func Csv_insert (csv_file string, table_type string) {
+func Csv_insert (csv_file string, table_type string) { // Might rip this element out of this function later, since I don't know if it's going to be used again.
 	var t Table
 	csv_arr, rows := Import_from_csv(csv_file)
 	format := csv_arr[0]
@@ -205,12 +205,12 @@ func Match_populate (matches_csv string, players_csv string) ([]Match_data, []Pl
 	return matches, players
 }
 
-func Match_sort_insert (db_driver string, db_loc string, matches []Match_data, players []Player_data) {
+func Match_sort_insert (config Settings, matches []Match_data, players []Player_data) {
 	for i := 0; i < len(matches); i++ {
-		matches[i].Insert(db_driver,db_loc)
+		matches[i].Insert(config.db_driver,config.db_address)
 		for j := 0; j < len(players); j++ {
 			if players[j].match_id == matches[i].id {
-				players[j].Insert(db_driver,db_loc)
+				players[j].Insert(config.db_driver,config.db_address)
 			}
 		}
 	}
@@ -222,12 +222,12 @@ func Error_check(err error) {
 	}
 }
 
-func Init (db_driver string, db_loc string) {
-	fmt.Println(db_driver)
-	fmt.Println(db_loc)
-	switch db_driver {
+func Init (config Settings) {
+	fmt.Println(config.db_driver)
+	fmt.Println(config.db_address)
+	switch config.db_driver {
 	case "sqlite3":
-	db, err_open := sql.Open(db_driver,"file:" + db_loc + "?_foreign_keys=true")
+	db, err_open := sql.Open(config.db_driver,"file:" + config.db_address + "?_foreign_keys=true")
 
 	Error_check(err_open)
 
@@ -276,7 +276,7 @@ func Init (db_driver string, db_loc string) {
 		`)
 		Error_check(err_player_data)
 	case "postgres":
-		db, err_open := sql.Open(db_driver,db_loc)
+		db, err_open := sql.Open(config.db_driver,config.db_address)
 
 		Error_check(err_open)
 
@@ -317,22 +317,19 @@ func Init (db_driver string, db_loc string) {
 	}
 }
 
-func Exec(db_loc string, query string) sql.Result { // FIXME: Doesn't allow for Postgres, might replace with a method that serves a similar function.
-	db, err_open := sql.Open("sqlite3","file:" + db_loc + "?_foreign_keys=true")
+func Query(config Settings, query string) *sql.Rows {
 
-	Error_check(err_open)
+	var ( 
+		db *sql.DB
+		err_open error	
+	)
 
-	defer db.Close()
-
-	result, err_query := db.Exec(query)
-
-	Error_check(err_query)
-
-	return result
-}
-
-func Query(db_loc string, query string) *sql.Rows { // FIXME: Doesn't allow for Postgres, might replace with a method that serves a similar function.
-	db, err_open := sql.Open("sqlite3","file:" + db_loc + "?_foreign_keys=true")
+	switch config.db_driver {
+	case "sqlite3":
+		db, err_open = sql.Open("sqlite3","file:" + config.db_address + "?_foreign_keys=true")
+	case "postgres":
+		db, err_open = sql.Open("postgres",config.db_address)
+	}
 
 	Error_check(err_open)
 
