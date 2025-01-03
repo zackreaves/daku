@@ -60,7 +60,7 @@ func (g *Games) Populate_from_args (args []string, format []string) {
 			g.score_kept,_ = strconv.ParseBool(args[i])
 		case "tie_breakers":
 			g.tie_breakers,_ = strconv.ParseBool(args[i])
-		case "extensions":
+		case "round_extensions":
 			g.extensions,_ = strconv.ParseBool(args[i])
 		case "id":
 			id,_ := strconv.ParseUint(args[i],10,64)
@@ -72,7 +72,7 @@ func (g *Games) Populate_from_args (args []string, format []string) {
 func (g Games) Insert (db_driver string, db_loc string) (sql.Result, error) {
 	db, err_open := sql.Open(db_driver,db_loc)	
 	defer db.Close()
-	result, err_exec := db.Exec("INSERT INTO games (name,ties_possible,tie_breakers,score_kept,extensions) VALUES ($1,$2,$3,$4,$5);",g.name,g.ties_possible,g.tie_breakers,g.score_kept,g.extensions)
+	result, err_exec := db.Exec("INSERT INTO games (name,ties_possible,tie_breakers,score_kept,round_extensions) VALUES ($1,$2,$3,$4,$5);",g.name,g.ties_possible,g.tie_breakers,g.score_kept,g.extensions)
 
 
 	return result, fmt.Errorf("Games INSERT Failed: \n%w\n%w\n", err_open, err_exec)
@@ -159,6 +159,27 @@ func Populate_from_arguments (args []string, format []string, t Table) {
 
 func Insert_from_table (db_driver string, db_loc string, t Table) (sql.Result, error) {
 	return t.Insert(db_driver, db_loc)
+}
+
+func Csv_insert (csv_file string, table_type string) {
+	var t Table
+	csv_arr, rows := Import_from_csv(csv_file)
+	format := csv_arr[0]
+	csv_args := csv_arr[1:]
+	switch table_type {
+	case "players":
+		t = &Players{}
+	case "games":
+		t = &Games{}
+	case "match_data":
+		t = &Match_data{}
+	case "player_data":
+		t = &Player_data{}
+	}
+	for i := 0; i < rows-1 ; i++ {
+		Populate_from_arguments(csv_args[i], format, t)
+		Insert_from_table(config.db_driver,config.db_address,t)
+	}
 }
 
 func Match_populate (matches_csv string, players_csv string) ([]Match_data, []Player_data) {

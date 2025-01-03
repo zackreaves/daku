@@ -57,48 +57,7 @@ func main () {
 		fmt.Println(res)
 	case "csv":
 		config.flags(os.Args[4:])
-		switch os.Args[2] {
-		case "players":
-			csv_arr, rows := Import_from_csv(os.Args[3])
-			format := csv_arr[0]
-			csv_args := csv_arr[1:]
-			t := Players{}
-			tp := &t
-			for i := 0; i < rows-1 ; i++ {
-				Populate_from_arguments(csv_args[i], format, tp) //FIXME AND ALL LIKE INSTANCES: INTERFACE UNNECESSARY AND RESULTING FUNCTIONS ARE UNNECESSARY OR NEED A REVISED IMPLEMENTATION.
-				Insert_from_table(config.db_driver,config.db_address,tp)
-			}
-		case "games":
-			csv_arr, rows := Import_from_csv(os.Args[3])
-			format := csv_arr[0]
-			csv_args := csv_arr[1:]
-			t := Games{}
-			tp := &t
-			for i := 0; i < rows-1 ; i++ {
-				Populate_from_arguments(csv_args[i], format, tp)
-				Insert_from_table(config.db_driver,config.db_address,tp)
-			}
-		case "match_data":
-			csv_arr, rows := Import_from_csv(os.Args[3])
-			format := csv_arr[0]
-			csv_args := csv_arr[1:]
-			t := Match_data{}
-			tp := &t
-			for i := 0; i < rows-1 ; i++ {
-				Populate_from_arguments(csv_args[i], format, tp)
-				Insert_from_table(config.db_driver,config.db_address,tp)
-			}
-		case "player_data":
-			csv_arr, rows := Import_from_csv(os.Args[3])
-			format := csv_arr[0]
-			csv_args := csv_arr[1:]
-			t := Player_data{}
-			tp := &t
-			for i := 0; i < rows-1 ; i++ {
-				Populate_from_arguments(csv_args[i], format, tp)
-				Insert_from_table(config.db_driver,config.db_address,tp)
-			}
-		}
+		Csv_insert(os.Args[3],os.Args[2])
 	default:
 		fmt.Println("No argument given.")
 	}
