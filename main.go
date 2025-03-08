@@ -54,6 +54,16 @@ func main () {
 	case "csv":
 		config.flags(os.Args[4:])
 		Csv_insert(os.Args[3],os.Args[2])
+	case "list":
+		switch os.Args[2] {
+		case "players":
+			config.flags(os.Args[3:])
+			_, col := Query_name(config)
+			fmt.Println(col)
+		case "games":
+			config.flags(os.Args[3:])
+			Query_games(config)
+		}
 	default:
 		fmt.Println("No argument given.")
 	}

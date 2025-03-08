@@ -317,7 +317,7 @@ func Init (config Settings) {
 	}
 }
 
-func Query(config Settings, query string) *sql.Rows {
+func Query (config Settings, query string) *sql.Rows {
 
 	var ( 
 		db *sql.DB
@@ -340,4 +340,44 @@ func Query(config Settings, query string) *sql.Rows {
 	Error_check(err_query)
 
 	return result
+}
+
+func Query_name (config Settings) ([]Players, []string) {
+	query := "SELECT * FROM players;"
+	result := Query(config, query)
+	var (
+		player Players
+		players []Players
+	)
+
+	defer result.Close()
+
+	columns,_ := result.Columns()
+
+	for result.Next() {
+		result.Scan(&player.id, &player.name_first)
+		players = append(players, player)
+	}
+
+	return players, columns
+}
+
+func Query_games (config Settings) ([]Games, []string) {
+	query := "SELECT * FROM games;"
+	result := Query(config, query)
+	var (
+		game Games
+		games []Games
+	)
+
+	defer result.Close()
+
+	columns,_ := result.Columns()
+
+	for result.Next() {
+		result.Scan(&game.id,&game.name,&game.ties_possible,&game.tie_breakers,&game.score_kept,&game.extensions)
+		games = append(games,game)
+	}
+
+	return games, columns
 }
