@@ -37,7 +37,7 @@ func (p Players) Insert (db_driver string, db_loc string) (sql.Result, error) {
 	defer db.Close()
 	result, err_exec := db.Exec("INSERT INTO players (name_first) VALUES ($1)", p.name_first)
 
-	return result, fmt.Errorf("Players INSERT Failed: \nOn Open: %w\nOn INSERT: %w\nAttempted Value: %s\n",err_open,err_exec, p.name_first)
+	return result, fmt.Errorf("Games INSERT Failed: \n%w\n%w\n", err_open, err_exec)
 }
 
 type Games struct {
@@ -74,15 +74,14 @@ func (g Games) Insert (db_driver string, db_loc string) (sql.Result, error) {
 	defer db.Close()
 	result, err_exec := db.Exec("INSERT INTO games (name,ties_possible,tie_breakers,score_kept,round_extensions) VALUES ($1,$2,$3,$4,$5);",g.name,g.ties_possible,g.tie_breakers,g.score_kept,g.extensions)
 
-
 	return result, fmt.Errorf("Games INSERT Failed: \n%w\n%w\n", err_open, err_exec)
 }
 
 type Match_data struct {
 	id uint
 	game_id uint
-	rounds uint
-	datetime string
+	round_count uint
+	date_time string
 	player_count uint
 }
 
@@ -95,11 +94,11 @@ func (m *Match_data) Populate_from_args (args []string, format []string) {
 		case "game_id":
 			id,_ := strconv.ParseUint(args[i],10,64)
 			m.game_id = uint(id)
-		case "rounds":
+		case "round_count":
 			rounds,_ := strconv.ParseUint(args[i],10,64)
-			m.rounds = uint(rounds)
-		case "datetime":
-			m.datetime = args[i]
+			m.round_count = uint(rounds)
+		case "date_time":
+			m.date_time = args[i]
 		case "player_count":
 			count,_ := strconv.ParseUint(args[i],10,64)
 			m.player_count = uint(count)
@@ -110,7 +109,7 @@ func (m *Match_data) Populate_from_args (args []string, format []string) {
 func (m Match_data) Insert (db_driver string, db_loc string) (sql.Result, error) {
 	db, err_open := sql.Open(db_driver,db_loc)
 	defer db.Close()
-	result, err_exec := db.Exec("INSERT INTO match_data (game_id,rounds,datetime,player_count) VALUES ($1,$2,$3,$4);",m.game_id,m.rounds,m.datetime,m.player_count)
+	result, err_exec := db.Exec("INSERT INTO match_data (game_id,round_count,date_time,player_count) VALUES ($1,$2,$3,$4);",m.game_id,m.round_count,m.date_time,m.player_count)
 
 	return result, fmt.Errorf("Match Data INSERT Failed: \n%w \n%w\n",err_open,err_exec)
 }
@@ -118,7 +117,7 @@ func (m Match_data) Insert (db_driver string, db_loc string) (sql.Result, error)
 type Player_data struct {
 	player_id uint
 	match_id uint
-	points float64
+	score float64
 	win bool
 	ties uint
 	round_number uint
@@ -133,9 +132,9 @@ func (p *Player_data) Populate_from_args (args []string, format []string) {
 		case "match_id":
 			vuint,_ := strconv.ParseUint(args[i],10,64)
 			p.match_id = uint(vuint)
-		case "points":
+		case "score":
 			vfloat,_ := strconv.ParseFloat(args[i],64)
-			p.points = vfloat
+			p.score = vfloat
 		case "round_number":
 			vuint,_ := strconv.ParseUint(args[i],10,64)
 			p.round_number = uint(vuint)
@@ -148,7 +147,8 @@ func (p *Player_data) Populate_from_args (args []string, format []string) {
 
 func (p Player_data) Insert (db_driver string, db_loc string) (sql.Result, error) {
 	db, err_open := sql.Open(db_driver,db_loc)
-	result, err_exec := db.Exec("INSERT INTO player_data (player_id,match_id,points,win,ties,round_number) VALUES ($1,$2,$3,$4,$5,$6);", p.player_id,p.match_id,p.points,p.win,p.ties,p.round_number)
+	defer db.Close()
+	result, err_exec := db.Exec("INSERT INTO player_data (player_id,match_id,score,win,ties,round_number) VALUES ($1,$2,,$3,$4,$5,$6);", p.player_id,p.match_id,p.score,p.win,p.ties,p.round_number)
 
 	return result, fmt.Errorf("Player Data INSERT Failed: \n%w \n%w\n",err_open,err_exec)
 }
@@ -198,8 +198,8 @@ func Match_populate (matches_csv string, players_csv string) ([]Match_data, []Pl
 	player_format := player_arr[0]
 	player_args := player_arr[1:]
 
-	for i := 0; i < player_rows-1; i++ {
-		players[i].Populate_from_args(player_args[i],player_format)
+	for j := 0; j < player_rows-1; j++ {
+		players[j].Populate_from_args(player_args[j],player_format)
 	}
 
 	return matches, players
@@ -307,7 +307,7 @@ func Init (config Settings) {
 				"player_id" INTEGER REFERENCES players(id),
 				"win" BOOLEAN NULL,
 				"score" REAL NULL,
-				"tie" BOOLEAN NULL,
+				"ties" REAL NULL,
 				"round_number" INTEGER DEFAULT 1
 			);
 		`)
