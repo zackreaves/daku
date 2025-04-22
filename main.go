@@ -52,8 +52,15 @@ func main () {
 		Init(config)
 		fmt.Println(config.db_address)
 	case "csv":
-		config.flags(os.Args[4:])
-		Csv_insert(os.Args[3],os.Args[2])
+		switch os.Args[2] {
+		case "table":
+			config.flags(os.Args[5:])
+			Csv_insert(os.Args[4],os.Args[3])
+		case "match":
+			config.flags(os.Args[5:])
+			matches, players := Match_populate(os.Args[3],os.Args[4])
+			Match_sort_insert(config, matches, players)
+		}
 	case "list":
 		switch os.Args[2] {
 		case "players":

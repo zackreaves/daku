@@ -186,7 +186,7 @@ func Match_populate (matches_csv string, players_csv string) ([]Match_data, []Pl
 	match_arr, match_rows := Import_from_csv(matches_csv)
 	player_arr, player_rows := Import_from_csv(players_csv)
 	matches := make([]Match_data,match_rows)
-	players := make([]Player_data,match_rows)
+	players := make([]Player_data,player_rows)
 
 	match_format := match_arr[0]
 	match_args := match_arr[1:]
