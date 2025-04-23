@@ -11,7 +11,7 @@ import (
 )
 
 type Table interface {
-	Insert(db_driver string, db_loc string) (sql.Result, error) // Insert into table.
+	Insert(db_driver string, db_loc string) (error) // Insert into table.
 	Populate_from_args(args []string, format []string)
 }
 
@@ -32,12 +32,17 @@ func (p *Players) Populate_from_args(args []string, format []string) {
 	}
 }
 
-func (p Players) Insert (db_driver string, db_loc string) (sql.Result, error) {
+func (p Players) Insert (db_driver string, db_loc string) (error) {
 	db, err_open := sql.Open(db_driver, db_loc)
 	defer db.Close()
-	result, err_exec := db.Exec("INSERT INTO players (name_first) VALUES ($1)", p.name_first)
 
-	return result, fmt.Errorf("Games INSERT Failed: \n%w\n%w\n", err_open, err_exec)
+	if err_open != nil {
+		return err_open
+	}
+
+	_, err_exec := db.Exec("INSERT INTO players (name_first) VALUES ($1)", p.name_first)
+
+	return err_exec
 }
 
 type Games struct {
@@ -69,12 +74,16 @@ func (g *Games) Populate_from_args (args []string, format []string) {
 	}
 }
 
-func (g Games) Insert (db_driver string, db_loc string) (sql.Result, error) {
+func (g Games) Insert (db_driver string, db_loc string) (error) {
 	db, err_open := sql.Open(db_driver,db_loc)	
 	defer db.Close()
-	result, err_exec := db.Exec("INSERT INTO games (name,ties_possible,tie_breakers,score_kept,round_extensions) VALUES ($1,$2,$3,$4,$5);",g.name,g.ties_possible,g.tie_breakers,g.score_kept,g.extensions)
+	if err_open != nil {
+		return err_open
+	}
 
-	return result, fmt.Errorf("Games INSERT Failed: \n%w\n%w\n", err_open, err_exec)
+	_, err_exec := db.Exec("INSERT INTO games (name,ties_possible,tie_breakers,score_kept,round_extensions) VALUES ($1,$2,$3,$4,$5);",g.name,g.ties_possible,g.tie_breakers,g.score_kept,g.extensions)
+
+	return err_exec
 }
 
 type Match_data struct {
@@ -83,6 +92,7 @@ type Match_data struct {
 	round_count uint
 	date_time string
 	player_count uint
+	relative_id bool
 }
 
 func (m *Match_data) Populate_from_args (args []string, format []string) {
@@ -102,16 +112,27 @@ func (m *Match_data) Populate_from_args (args []string, format []string) {
 		case "player_count":
 			count,_ := strconv.ParseUint(args[i],10,64)
 			m.player_count = uint(count)
+		case "relative_id":
+			vbool,_ := strconv.ParseBool(args[i])
+			m.relative_id = vbool
 		}
 	}
 }
 
-func (m Match_data) Insert (db_driver string, db_loc string) (sql.Result, error) {
+func (m Match_data) Insert (db_driver string, db_loc string) (error) {
+	if m.relative_id {
+		return fmt.Errorf("INSERT INTO match_data FAILED: only absolute id is allowed.")
+	}
+
 	db, err_open := sql.Open(db_driver,db_loc)
 	defer db.Close()
-	result, err_exec := db.Exec("INSERT INTO match_data (game_id,round_count,date_time,player_count) VALUES ($1,$2,$3,$4);",m.game_id,m.round_count,m.date_time,m.player_count)
+	if err_open != nil {
+		return err_open
+	}
 
-	return result, fmt.Errorf("Match Data INSERT Failed: \n%w \n%w\n",err_open,err_exec)
+	_, err_exec := db.Exec("INSERT INTO match_data (game_id,round_count,date_time,player_count) VALUES ($1,$2,$3,$4);",m.game_id,m.round_count,m.date_time,m.player_count)
+
+	return err_exec
 }
 
 type Player_data struct {
@@ -121,6 +142,7 @@ type Player_data struct {
 	win bool
 	ties uint
 	round_number uint
+	relative_id bool
 }
 
 func (p *Player_data) Populate_from_args (args []string, format []string) {
@@ -141,23 +163,35 @@ func (p *Player_data) Populate_from_args (args []string, format []string) {
 		case "win":
 			vbool,_ := strconv.ParseBool(args[i])
 			p.win = vbool
+		case "relative_id":
+			vbool,_ := strconv.ParseBool(args[i])
+			p.relative_id = vbool
 		}
 	}
 }
 
-func (p Player_data) Insert (db_driver string, db_loc string) (sql.Result, error) {
+func (p Player_data) Insert (db_driver string, db_loc string) (error) {
+	if p.relative_id {
+		return fmt.Errorf("INSERT INTO player_data FAILED: only absolute id is allowed.")
+	}
+
 	db, err_open := sql.Open(db_driver,db_loc)
 	defer db.Close()
-	result, err_exec := db.Exec("INSERT INTO player_data (player_id,match_id,score,win,ties,round_number) VALUES ($1,$2,,$3,$4,$5,$6);", p.player_id,p.match_id,p.score,p.win,p.ties,p.round_number)
 
-	return result, fmt.Errorf("Player Data INSERT Failed: \n%w \n%w\n",err_open,err_exec)
+	if err_open != nil {
+		return err_open
+	} 
+
+	_, err_exec := db.Exec("INSERT INTO player_data (player_id,match_id,score,win,ties,round_number) VALUES ($1,$2,,$3,$4,$5,$6);", p.player_id,p.match_id,p.score,p.win,p.ties,p.round_number)
+
+	return err_exec
 }
 
 func Populate_from_arguments (args []string, format []string, t Table) {
 	t.Populate_from_args(args,format)
 }
 
-func Insert_from_table (db_driver string, db_loc string, t Table) (sql.Result, error) {
+func Insert_from_table (db_driver string, db_loc string, t Table) (error) {
 	return t.Insert(db_driver, db_loc)
 }
 
@@ -178,7 +212,8 @@ func Csv_insert (csv_file string, table_type string) { // Might rip this element
 	}
 	for i := 0; i < rows-1 ; i++ {
 		Populate_from_arguments(csv_args[i], format, t)
-		Insert_from_table(config.db_driver,config.db_address,t)
+		err := Insert_from_table(config.db_driver,config.db_address,t)
+		Error_check(err)
 	}
 }
 
