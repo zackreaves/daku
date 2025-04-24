@@ -244,6 +244,7 @@ func Match_sort_insert (config Settings, matches []Match_data, players []Player_
 
 		db, err := sql.Open(config.db_driver,config.db_address)
 		Error_check(err)
+		defer db.Close()
 
 		match_stmt, err := db.Prepare("INSERT INTO match_data (game_id,round_count,date_time,player_count) VALUES ($1,$2,$3,$4);")
 		Error_check(err)
@@ -254,10 +255,10 @@ func Match_sort_insert (config Settings, matches []Match_data, players []Player_
 		defer match_stmt.Close()
 		defer player_stmt.Close()
 
-		for i := 0; i < len(matches); i++ {
+		for i := 0; i < len(matches)-1; i++ {
 			_, err := match_stmt.Exec(matches[i].game_id, matches[i].round_count, matches[i].date_time, matches[i].player_count)
 			Error_check(err)
-			for j := 0; j < len(players); j++ {
+			for j := 0; j < len(players)-1; j++ {
 				if players[j].match_id == matches[i].id {
 					_,err = player_stmt.Exec(players[j].player_id, players[j].win, players[j].score, players[j].ties, players[j].round_number)
 					Error_check(err)
