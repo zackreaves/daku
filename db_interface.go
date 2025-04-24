@@ -9,6 +9,10 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	_ "github.com/lib/pq"
 )
+type Win_rate struct {
+	name string
+	win_rate float64
+}
 
 type Table interface {
 	Insert(db_driver string, db_loc string) (error) // Insert into table.
@@ -431,4 +435,24 @@ func Query_games (config Settings) ([]Games, []string) {
 	}
 
 	return games, columns
+}
+
+func Query_win_rate(config Settings,game uint,player_count uint) ([]Win_rate) {
+	var (
+		win_rate_query string
+		win_rates []Win_rate
+	)
+	if player_count == 0 {
+		win_rate_query = fmt.Sprint("SELECT players.name_first AS name, (COUNT(player_data.win) FILTER (WHERE player_data.win = true AND match_data.game_id = ", game,"))::float / (COUNT(player_data.win) FILTER (WHERE match_data.game_id =", game,"))::float AS win_rate FROM player_data JOIN match_data ON match_data.id = player_data.match_id JOIN players ON players.id = player_data.player_id GROUP BY players.name_first;")
+	} else {
+		win_rate_query = fmt.Sprint("SELECT players.name_first AS name, (COUNT(player_data.win) FILTER (WHERE player_data.win = true AND match_data.game_id = ", game,"))::float / (COUNT(player_data.win) FILTER (WHERE match_data.game_id =", game,"))::float AS win_rate FROM player_data JOIN match_data ON match_data.id = player_data.match_id JOIN players ON players.id = player_data.player_id WHERE match_data =", player_count,"GROUP BY players.name_first;")
+	}
+	result := Query(config,win_rate_query)
+	defer result.Close()
+
+	for i := 0; result.Next(); i++ {
+		result.Scan(&win_rates[i].name,&win_rates[i].win_rate)
+	}
+
+	return win_rates
 }
