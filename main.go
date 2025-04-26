@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 )
 
 type Settings struct {
@@ -70,6 +71,13 @@ func main () {
 		case "games":
 			config.flags(os.Args[3:])
 			Query_games(config)
+		case "winrates":
+			config.flags(os.Args[5:])
+			game, err := strconv.ParseUint(os.Args[3],10,64)
+			Error_check(err)
+			player_num, err := strconv.ParseUint(os.Args[4],10,64)
+			Error_check(err)
+			Query_win_rate(config,uint(game),uint(player_num))
 		}
 	default:
 		fmt.Println("No argument given.")

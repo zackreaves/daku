@@ -9,10 +9,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	_ "github.com/lib/pq"
 )
-type Win_rate struct {
-	name string
-	win_rate float64
-}
 
 type Table interface {
 	Insert(db_driver string, db_loc string) (error) // Insert into table.
@@ -437,22 +433,63 @@ func Query_games (config Settings) ([]Games, []string) {
 	return games, columns
 }
 
-func Query_win_rate(config Settings,game uint,player_count uint) ([]Win_rate) {
+func Query_win_rate(config Settings,game uint,player_count uint) (error) {
 	var (
-		win_rate_query string
-		win_rates []Win_rate
+		win_rate_query *sql.Stmt
+		name string
+		win_rate float64
+		result *sql.Rows
 	)
+	db, err := sql.Open(config.db_driver,config.db_address)
+	defer db.Close()
+	Error_check(err)
+
 	if player_count == 0 {
-		win_rate_query = fmt.Sprint("SELECT players.name_first AS name, (COUNT(player_data.win) FILTER (WHERE player_data.win = true AND match_data.game_id = ", game,"))::float / (COUNT(player_data.win) FILTER (WHERE match_data.game_id =", game,"))::float AS win_rate FROM player_data JOIN match_data ON match_data.id = player_data.match_id JOIN players ON players.id = player_data.player_id GROUP BY players.name_first;")
+		win_rate_query, err = db.Prepare(`
+		SELECT
+		players.name_first AS name,
+		CASE
+			WHEN (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $1)) > 0
+			THEN (COUNT(player_data.win) FILTER (WHERE player_data.win = true AND match_data.game_id = $2))::float / (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $3))::float
+			ELSE -1
+		END as win_rate
+		FROM player_data
+		JOIN match_data ON match_data.id = player_data.match_id
+		JOIN players ON players.id = player_data.player_id
+		GROUP BY players.name_first;
+		`)
+		Error_check(err)
+		result, err = win_rate_query.Query(game,game,game)
+
 	} else {
-		win_rate_query = fmt.Sprint("SELECT players.name_first AS name, (COUNT(player_data.win) FILTER (WHERE player_data.win = true AND match_data.game_id = ", game,"))::float / (COUNT(player_data.win) FILTER (WHERE match_data.game_id =", game,"))::float AS win_rate FROM player_data JOIN match_data ON match_data.id = player_data.match_id JOIN players ON players.id = player_data.player_id WHERE match_data =", player_count,"GROUP BY players.name_first;")
+		win_rate_query, err = db.Prepare(`
+		SELECT
+		players.name_first AS name,
+		CASE
+			WHEN (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $1)) > 0
+			THEN (COUNT(player_data.win) FILTER (WHERE player_data.win = true AND match_data.game_id = $2))::float / (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $3))::float
+			ELSE -1
+		END as win_rate
+		FROM player_data
+		JOIN match_data ON match_data.id = player_data.match_id
+		JOIN players ON players.id = player_data.player_id
+		WHERE match_data.player_count = $4
+		GROUP BY players.name_first;
+		`)
+		Error_check(err)
+		result, err = win_rate_query.Query(game,game,game,player_count)
 	}
-	result := Query(config,win_rate_query)
+
 	defer result.Close()
+	Error_check(err)
 
-	for i := 0; result.Next(); i++ {
-		result.Scan(&win_rates[i].name,&win_rates[i].win_rate)
+	fmt.Println("Player: Win rate")
+	for result.Next() {	
+		result.Scan(&name,&win_rate)
+		if win_rate != -1 {
+			fmt.Println(name, ": ", win_rate)
+		}
 	}
 
-	return win_rates
+	return nil
 }
