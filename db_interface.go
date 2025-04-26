@@ -246,10 +246,14 @@ func Match_sort_insert (config Settings, matches []Match_data, players []Player_
 		Error_check(err)
 		defer db.Close()
 
-		match_stmt, err := db.Prepare("INSERT INTO match_data (game_id,round_count,date_time,player_count) VALUES ($1,$2,$3,$4);")
+		tx, err := db.Begin()
+		Error_check(err)
+		defer tx.Rollback()
+
+		match_stmt, err := tx.Prepare("INSERT INTO match_data (game_id,round_count,date_time,player_count) VALUES ($1,$2,$3,$4);")
 		Error_check(err)
 
-		player_stmt, err := db.Prepare("INSERT INTO player_data (match_id,player_id,win,score,ties,round_number) VALUES ((SELECT MAX (id) FROM match_data),$1,$2,$3,$4,$5);")
+		player_stmt, err := tx.Prepare("INSERT INTO player_data (match_id,player_id,win,score,ties,round_number) VALUES ((SELECT MAX (id) FROM match_data),$1,$2,$3,$4,$5);")
 		Error_check(err)
 
 		defer match_stmt.Close()
@@ -265,6 +269,8 @@ func Match_sort_insert (config Settings, matches []Match_data, players []Player_
 				}
 			}
 		}
+
+		Error_check(tx.Commit())
 }
 
 func Error_check(err error) {
