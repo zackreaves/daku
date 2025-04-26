@@ -493,7 +493,7 @@ func Query_win_rate(config Settings,game uint,player_count uint) (error) {
 	for result.Next() {	
 		result.Scan(&name,&win_rate)
 		if win_rate != -1 {
-			fmt.Println(name, ": ", win_rate)
+			fmt.Println(name, ": ", win_rate * 100, "%")
 		}
 	}
 
