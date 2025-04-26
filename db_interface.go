@@ -166,6 +166,9 @@ func (p *Player_data) Populate_from_args (args []string, format []string) {
 		case "relative_id":
 			vbool,_ := strconv.ParseBool(args[i])
 			p.relative_id = vbool
+		case "ties":
+			vuint,_ := strconv.ParseUint(args[i],10,64)
+			p.ties = uint(vuint)
 		}
 	}
 }
@@ -439,11 +442,16 @@ func Query_games (config Settings) ([]Games, []string) {
 	return games, columns
 }
 
-func Query_win_rate(config Settings,game uint,player_count uint) (error) {
+type Collated_player_stats struct {
+	name string
+	win_rate float64
+}
+
+func Query_win_rate(config Settings,game uint,player_count uint) ([]Collated_player_stats, error) {
 	var (
 		win_rate_query *sql.Stmt
-		name string
-		win_rate float64
+		stats Collated_player_stats
+		all_stats []Collated_player_stats
 		result *sql.Rows
 	)
 	db, err := sql.Open(config.db_driver,config.db_address)
@@ -491,11 +499,12 @@ func Query_win_rate(config Settings,game uint,player_count uint) (error) {
 
 	fmt.Println("Player: Win rate")
 	for result.Next() {	
-		result.Scan(&name,&win_rate)
-		if win_rate != -1 {
-			fmt.Println(name, ": ", win_rate * 100, "%")
+		result.Scan(&stats.name,&stats.win_rate)
+		all_stats = append(all_stats,stats)
+		if stats.win_rate != -1 {
+			fmt.Printf("%s: %.2f%s \n", stats.name, stats.win_rate * 100, "%")
 		}
 	}
 
-	return nil
+	return all_stats, nil
 }
