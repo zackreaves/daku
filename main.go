@@ -77,7 +77,9 @@ func main () {
 			Error_check(err)
 			player_num, err := strconv.ParseUint(os.Args[4],10,64)
 			Error_check(err)
-			Query_win_rate(config,uint(game),uint(player_num))
+			win_rates, err := Query_win_rate(config,uint(game),uint(player_num))
+			Error_check(err)
+			Print_win_rate(win_rates)
 		}
 	default:
 		fmt.Println("No argument given.")

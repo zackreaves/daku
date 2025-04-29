@@ -447,7 +447,7 @@ type Collated_player_stats struct {
 	win_rate float64
 }
 
-func Query_win_rate(config Settings,game uint,player_count uint) ([]Collated_player_stats, error) {
+func Query_win_rate (config Settings,game uint,player_count uint) ([]Collated_player_stats, error) {
 	var (
 		win_rate_query *sql.Stmt
 		stats Collated_player_stats
@@ -497,14 +497,19 @@ func Query_win_rate(config Settings,game uint,player_count uint) ([]Collated_pla
 	defer result.Close()
 	Error_check(err)
 
-	fmt.Println("Player: Win rate")
 	for result.Next() {	
 		result.Scan(&stats.name,&stats.win_rate)
 		all_stats = append(all_stats,stats)
-		if stats.win_rate != -1 {
-			fmt.Printf("%s: %.2f%s \n", stats.name, stats.win_rate * 100, "%")
-		}
 	}
 
 	return all_stats, nil
+}
+
+func Print_win_rate (all_stats []Collated_player_stats) {
+	fmt.Println("Player: Win rate")
+	for i := 0; i < len(all_stats); i++{
+		if all_stats[i].win_rate != -1 {
+			fmt.Printf("%s: %.2f%s \n", all_stats[i].name, all_stats[i].win_rate * 100, "%")
+		}
+	}
 }
