@@ -445,6 +445,7 @@ func Query_games (config Settings) ([]Games, []string) {
 type Collated_player_stats struct {
 	name string
 	win_rate float64
+	avg_score float64
 }
 
 func Query_win_rate (config Settings,game uint,player_count uint) ([]Collated_player_stats, error) {
@@ -466,14 +467,15 @@ func Query_win_rate (config Settings,game uint,player_count uint) ([]Collated_pl
 			WHEN (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $1)) > 0
 			THEN (COUNT(player_data.win) FILTER (WHERE player_data.win = true AND match_data.game_id = $2))::float / (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $3))::float
 			ELSE -1
-		END as win_rate
+		END as win_rate,
+		AVG(player_data.score) FILTER (WHERE match_data.game_id = $4) as average_score
 		FROM player_data
 		JOIN match_data ON match_data.id = player_data.match_id
 		JOIN players ON players.id = player_data.player_id
 		GROUP BY players.name_first;
 		`)
 		Error_check(err)
-		result, err = win_rate_query.Query(game,game,game)
+		result, err = win_rate_query.Query(game,game,game,game)
 
 	} else {
 		win_rate_query, err = db.Prepare(`
@@ -483,22 +485,23 @@ func Query_win_rate (config Settings,game uint,player_count uint) ([]Collated_pl
 			WHEN (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $1)) > 0
 			THEN (COUNT(player_data.win) FILTER (WHERE player_data.win = true AND match_data.game_id = $2))::float / (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $3))::float
 			ELSE -1
-		END as win_rate
+		END as win_rate,
+		AVG(player_data.score) FILTER (WHERE match_data.game_id = $4) as average_score
 		FROM player_data
 		JOIN match_data ON match_data.id = player_data.match_id
 		JOIN players ON players.id = player_data.player_id
-		WHERE match_data.player_count = $4
+		WHERE match_data.player_count = $5
 		GROUP BY players.name_first;
 		`)
 		Error_check(err)
-		result, err = win_rate_query.Query(game,game,game,player_count)
+		result, err = win_rate_query.Query(game,game,game,game,player_count)
 	}
 
 	defer result.Close()
 	Error_check(err)
 
 	for result.Next() {	
-		result.Scan(&stats.name,&stats.win_rate)
+		result.Scan(&stats.name,&stats.win_rate,&stats.avg_score)
 		all_stats = append(all_stats,stats)
 	}
 
@@ -509,7 +512,7 @@ func Print_win_rate (all_stats []Collated_player_stats) {
 	fmt.Println("Player: Win rate")
 	for i := 0; i < len(all_stats); i++{
 		if all_stats[i].win_rate != -1 {
-			fmt.Printf("%s: %.2f%s \n", all_stats[i].name, all_stats[i].win_rate * 100, "%")
+			fmt.Printf("%s: %.2f%s -- %.2f points on average \n", all_stats[i].name, all_stats[i].win_rate * 100, "%",all_stats[i].avg_score)
 		}
 	}
 }
