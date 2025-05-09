@@ -81,6 +81,8 @@ func main () {
 			Error_check(err)
 			Print_win_rate(win_rates)
 		}
+	case "tui":
+		Match_input_form()
 	default:
 		fmt.Println("No argument given.")
 	}
