@@ -448,6 +448,45 @@ type Collated_player_stats struct {
 	avg_score float64
 }
 
+func Query_players_all (config Settings) []Players {
+	var player Players
+	var players []Players
+
+	db, err := sql.Open(config.db_driver,config.db_address)
+	defer db.Close()
+	Error_check(err)
+
+	query_result, err := db.Query("SELECT * FROM players;")
+	Error_check(err)
+
+	for query_result.Next() {
+		query_result.Scan(&player.id,&player.name_first)
+		players = append(players, player)
+	}
+
+	return players
+}
+
+func Query_games_all (config Settings) []Games {
+	var game Games
+	var games []Games
+
+	db, err := sql.Open(config.db_driver,config.db_address)
+	defer db.Close()
+	Error_check(err)
+
+	query_result, err := db.Query("SELECT * FROM games;")
+	Error_check(err)
+
+	for query_result.Next() {
+		query_result.Scan(&game.id,&game.name,&game.ties_possible,&game.score_kept,&game.extensions)
+		games = append(games, game)
+	}
+
+	return games
+}
+
+
 func Query_win_rate (config Settings,game uint,player_count uint) ([]Collated_player_stats, error) {
 	var (
 		win_rate_query *sql.Stmt
