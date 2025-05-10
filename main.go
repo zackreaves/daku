@@ -51,7 +51,6 @@ func main () {
 	case "init":
 		config.flags(os.Args[2:])
 		Init(config)
-		fmt.Println(config.db_address)
 	case "csv":
 		switch os.Args[2] {
 		case "table":
@@ -82,7 +81,10 @@ func main () {
 			Print_win_rate(win_rates)
 		}
 	case "tui":
-		Match_input_form()
+		config.flags(os.Args[2:])
+		match, err := Match_input_form(config)
+		Error_check(err)
+		fmt.Println("Game ID: ",match.game_id,"Player Count: ",match.player_count)
 	default:
 		fmt.Println("No argument given.")
 	}

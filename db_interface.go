@@ -457,10 +457,12 @@ func Query_players_all (config Settings) []Players {
 	Error_check(err)
 
 	query_result, err := db.Query("SELECT * FROM players;")
+	defer query_result.Close()
 	Error_check(err)
 
 	for query_result.Next() {
-		query_result.Scan(&player.id,&player.name_first)
+		err = query_result.Scan(&player.id,&player.name_first)
+		Error_check(err)
 		players = append(players, player)
 	}
 
@@ -468,18 +470,23 @@ func Query_players_all (config Settings) []Players {
 }
 
 func Query_games_all (config Settings) []Games {
-	var game Games
-	var games []Games
+	var (
+		game Games
+		games []Games
+		query_result *sql.Rows
+	)
 
 	db, err := sql.Open(config.db_driver,config.db_address)
 	defer db.Close()
 	Error_check(err)
 
-	query_result, err := db.Query("SELECT * FROM games;")
+	query_result, err = db.Query("SELECT * FROM games;")
+	defer query_result.Close()
 	Error_check(err)
 
 	for query_result.Next() {
-		query_result.Scan(&game.id,&game.name,&game.ties_possible,&game.score_kept,&game.extensions)
+		err = query_result.Scan(&game.id,&game.name,&game.ties_possible,&game.tie_breakers,&game.score_kept,&game.extensions)
+		Error_check(err)
 		games = append(games, game)
 	}
 
