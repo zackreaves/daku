@@ -82,8 +82,7 @@ func main () {
 		}
 	case "tui":
 		config.flags(os.Args[2:])
-		match, err := Match_input_form(config)
-		Error_check(err)
+		match := Match_input_form(config)
 		fmt.Println("Game ID: ",match.game_id,"Player Count: ",match.player_count)
 	default:
 		fmt.Println("No argument given.")
