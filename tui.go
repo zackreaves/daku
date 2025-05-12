@@ -24,7 +24,8 @@ func Match_input_form(config Settings) (Match_data) {
 			return nil
 	})
 
-	player_count_input.Run()
+	err := player_count_input.Run()
+	Error_check(err)
 
 	games := Query_games_all(config)
 	for i := 0; i < len(games); i++ {
@@ -34,11 +35,7 @@ func Match_input_form(config Settings) (Match_data) {
 
 	game_select := huh.NewSelect[uint]().Title("Select Game:").Options(games_options...).Value(&match.game_id)
 
-	// page1 := huh.NewGroup(player_count_input,game_select)
-	// match_form := huh.NewForm(page1)
-
-	// err := match_form.Run()
-	err := game_select.Run()
+	err = game_select.Run()
 	Error_check(err)
 
 	player_count_int,_ := strconv.ParseUint(player_count,10,64)
@@ -50,11 +47,8 @@ func Match_input_form(config Settings) (Match_data) {
 		players_options = append(players_options, option)
 	}
 
-	player_select := huh.NewMultiSelect[uint]().Title("Select Players:").Options(players_options...).Limit(int(player_count_int)).Value(&player_id)
-	page2 := huh.NewGroup(player_select)
-	player_form := huh.NewForm(page2)
-
-	err = player_form.Run()
+	players_select := huh.NewMultiSelect[uint]().Title("Select Players:").Options(players_options...).Limit(int(player_count_int)).Value(&player_id)
+	err = players_select.Run()
 	Error_check(err)
 
 	player_data := make([]Player_data,len(player_id))
