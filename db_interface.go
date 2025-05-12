@@ -142,7 +142,6 @@ type Player_data struct {
 	win bool
 	ties uint
 	round_number uint
-	relative_id bool
 }
 
 func (p *Player_data) Populate_from_args (args []string, format []string) {
@@ -163,9 +162,6 @@ func (p *Player_data) Populate_from_args (args []string, format []string) {
 		case "win":
 			vbool,_ := strconv.ParseBool(args[i])
 			p.win = vbool
-		case "relative_id":
-			vbool,_ := strconv.ParseBool(args[i])
-			p.relative_id = vbool
 		case "ties":
 			vuint,_ := strconv.ParseUint(args[i],10,64)
 			p.ties = uint(vuint)
@@ -174,9 +170,6 @@ func (p *Player_data) Populate_from_args (args []string, format []string) {
 }
 
 func (p Player_data) Insert (db_driver string, db_loc string) (error) {
-	if p.relative_id {
-		return fmt.Errorf("INSERT INTO player_data FAILED: only absolute id is allowed.")
-	}
 
 	db, err_open := sql.Open(db_driver,db_loc)
 	defer db.Close()
@@ -373,7 +366,7 @@ func Init (config Settings) {
 		`)
 		Error_check(err_exec)
 	default:
-		fmt.Println("Supported databases include postgres and sqlite3.\n You can set the database using the DAKU_SQL_SERVICE command.")
+		fmt.Println("Supported databases include postgres and sqlite3.\n You can set the database using the DAKU_SQL_SERVICE environment variable.")
 	}
 }
 
