@@ -87,7 +87,7 @@ func (g Games) Insert (db_driver string, db_loc string) (error) {
 		return err_open
 	}
 
-	_, err_exec := db.Exec("INSERT INTO games (name,ties_possible,tie_breakers,score_kept,round_extensions) VALUES ($1,$2,$3,$4,$5);",g.name,g.ties_possible,g.tie_breakers,g.score_kept,g.extensions)
+	_, err_exec := db.Exec("INSERT INTO games (name,ties_possible,tie_breakers,score_kept,round_extensions,round_end_attribution,dealers) VALUES ($1,$2,$3,$4,$5,$6,$7);",g.name,g.ties_possible,g.tie_breakers,g.score_kept,g.extensions,g.round_end_attribution,g.dealers)
 
 	return err_exec
 }
@@ -190,7 +190,7 @@ func (p Player_data) Insert (db_driver string, db_loc string) (error) {
 		return err_open
 	} 
 
-	_, err_exec := db.Exec("INSERT INTO player_data (player_id,match_id,score,win,ties,round_number) VALUES ($1,$2,,$3,$4,$5,$6);", p.player_id,p.match_id,p.score,p.win,p.ties,p.round_number)
+	_, err_exec := db.Exec("INSERT INTO player_data (player_id,match_id,score,win,ties,round_number,round_ender,dealer) VALUES ($1,$2,,$3,$4,$5,$6,$7,$8);", p.player_id,p.match_id,p.score,p.win,p.ties,p.round_number,p.round_ender,p.dealer)
 
 	return err_exec
 }
@@ -261,7 +261,7 @@ func Match_sort_insert (config Settings, matches []Match_data, players []Player_
 		match_stmt, err := tx.Prepare("INSERT INTO match_data (game_id,round_count,date_time,player_count) VALUES ($1,$2,$3,$4);")
 		Error_check(err)
 
-		player_stmt, err := tx.Prepare("INSERT INTO player_data (match_id,player_id,win,score,ties,round_number) VALUES ((SELECT MAX (id) FROM match_data),$1,$2,$3,$4,$5);")
+		player_stmt, err := tx.Prepare("INSERT INTO player_data (match_id,player_id,win,score,ties,round_number,round_ender,dealer) VALUES ((SELECT MAX (id) FROM match_data),$1,$2,$3,$4,$5,$6,$7);")
 		Error_check(err)
 
 		defer match_stmt.Close()
