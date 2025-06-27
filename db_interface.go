@@ -52,6 +52,8 @@ type Games struct {
 	tie_breakers bool
 	score_kept bool
 	extensions bool
+	round_end_attribution bool
+	dealers bool
 }
 
 func (g *Games) Populate_from_args (args []string, format []string) {
@@ -70,6 +72,10 @@ func (g *Games) Populate_from_args (args []string, format []string) {
 		case "id":
 			id,_ := strconv.ParseUint(args[i],10,64)
 			g.id = uint(id)
+		case "round_end_attribution":
+			g.round_end_attribution,_ = strconv.ParseBool(args[i])
+		case "dealers":
+			g.dealers,_ = strconv.ParseBool(args[i])
 		}
 	}
 }
@@ -142,6 +148,8 @@ type Player_data struct {
 	win bool
 	ties uint
 	round_number uint
+	round_ender bool
+	dealer bool
 }
 
 func (p *Player_data) Populate_from_args (args []string, format []string) {
@@ -165,6 +173,10 @@ func (p *Player_data) Populate_from_args (args []string, format []string) {
 		case "ties":
 			vuint,_ := strconv.ParseUint(args[i],10,64)
 			p.ties = uint(vuint)
+		case "round_ender":
+			p.round_ender,_ = strconv.ParseBool(args[i])
+		case "dealer":
+			p.dealer,_ = strconv.ParseBool(args[i])
 		}
 	}
 }
@@ -346,7 +358,9 @@ func Init (config Settings) {
 				"ties_possible" BOOLEAN,
 				"tie_breakers" BOOLEAN,
 				"score_kept" BOOLEAN,
-				"round_extensions" BOOLEAN
+				"round_extensions" BOOLEAN,
+				"round_end_attribution" BOOLEAN,
+				"dealers" BOOLEAN
 			);
 			CREATE TABLE IF NOT EXISTS "match_data" (
 				"id" SERIAL PRIMARY KEY, 
@@ -361,7 +375,9 @@ func Init (config Settings) {
 				"win" BOOLEAN NULL,
 				"score" REAL NULL,
 				"ties" REAL NULL,
-				"round_number" INTEGER DEFAULT 1
+				"round_number" INTEGER DEFAULT 1,
+				"dealer" BOOLEAN DEFAULT NULL,
+				"round_ender" BOOLEAN DEFAULT NULL
 			);
 		`)
 		Error_check(err_exec)
