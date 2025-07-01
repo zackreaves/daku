@@ -35,43 +35,59 @@ var config = Settings {
 func Cli () {
 	switch os.Args[1] {
 	case "init":
-		config.flags(os.Args[2:])
-		Error_check(Init(config))
-	case "csv":
-		switch os.Args[2] {
-		case "table":
-			config.flags(os.Args[5:])
-			Error_check(Csv_insert(os.Args[4],os.Args[3]))
-		case "match":
-			config.flags(os.Args[5:])
-			matches, players := Match_populate(os.Args[3],os.Args[4])
-			Match_sort_insert(config, matches, players)
-		}
+		init_arg(2)
 	case "list":
-		switch os.Args[2] {
-		case "players":
-			config.flags(os.Args[3:])
-			_, col, err := Query_name(config)
-			Error_check(err)
-			fmt.Println(col) // TODO: ADD COMPONENT TO ACTUALLY PRINT PLAYER NAMES.
-		case "games":
-			config.flags(os.Args[3:])
-			Query_games(config)
-		case "winrates":
-			config.flags(os.Args[5:])
-			game, err := strconv.ParseUint(os.Args[3],10,64)
-			Error_check(err)
-			player_num, err := strconv.ParseUint(os.Args[4],10,64)
-			Error_check(err)
-			win_rates, err := Query_win_rate(config,uint(game),uint(player_num))
-			Error_check(err)
-			Print_win_rate(win_rates)
-		}
+		list_arg(2)
+	case "csv":
+		csv_arg(2)
 	case "tui":
-		config.flags(os.Args[2:])
-		match := Match_input_form(config)
-		fmt.Println("Game ID: ",match.game_id,"Player Count: ",match.player_count)
+		tui_arg(2)
 	default:
 		fmt.Println("No argument given.")
 	}
+}
+
+func init_arg(arg_start_point uint) {
+		config.flags(os.Args[arg_start_point:])
+		Error_check(Init(config))
+}
+
+func list_arg (arg_start_point uint) {
+	switch os.Args[arg_start_point] {
+	case "players":
+		config.flags(os.Args[arg_start_point+1:])
+		_, col, err := Query_name(config)
+		Error_check(err)
+		fmt.Println(col) // TODO: ADD COMPONENT TO ACTUALLY PRINT PLAYER NAMES.
+	case "games":
+		config.flags(os.Args[arg_start_point+1:])
+		Query_games(config)
+	case "winrates":
+		config.flags(os.Args[arg_start_point+3:])
+		game, err := strconv.ParseUint(os.Args[arg_start_point+1],10,64)
+		Error_check(err)
+		player_num, err := strconv.ParseUint(os.Args[arg_start_point+2],10,64)
+		Error_check(err)
+		win_rates, err := Query_win_rate(config,uint(game),uint(player_num))
+		Error_check(err)
+		Print_win_rate(win_rates)
+	}
+}
+
+func csv_arg (arg_start_point uint) {
+	switch os.Args[arg_start_point] {
+	case "table":
+		config.flags(os.Args[arg_start_point+3:])
+		Error_check(Csv_insert(os.Args[arg_start_point+2],os.Args[arg_start_point+1]))
+	case "match":
+		config.flags(os.Args[arg_start_point+3:])
+		matches, players := Match_populate(os.Args[arg_start_point+1],os.Args[arg_start_point+2])
+		Match_sort_insert(config, matches, players)
+	}
+}
+
+func tui_arg (arg_start_point uint) {
+	config.flags(os.Args[arg_start_point:])
+	match := Match_input_form(config)
+	fmt.Println("Game ID: ",match.game_id,"Player Count: ",match.player_count)
 }
