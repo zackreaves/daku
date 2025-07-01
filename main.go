@@ -1,5 +1,5 @@
 package main
 
 func main () {
-	Cli()
+	Error_check(Cli())
 }
