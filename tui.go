@@ -7,7 +7,7 @@ import (
 	"github.com/charmbracelet/huh"
 )
 
-func Match_input_form(config Settings) (Match_data) {
+func Match_input_form(config Settings) (Match_data, error) {
 	var (
 		player_count string
 		games_options []huh.Option[uint]
@@ -26,9 +26,15 @@ func Match_input_form(config Settings) (Match_data) {
 	})
 
 	err := player_count_input.Run()
-	Error_check(err)
+	if err != nil {
+		return match, err
+	}
 
-	games := Query_games_all(config)
+	games, err := Query_games_all(config)
+	if err != nil {
+		return match, err
+	}
+
 	for i := 0; i < len(games); i++ {
 		option := huh.NewOption(games[i].name,games[i].id)
 		games_options = append(games_options, option)
@@ -37,12 +43,17 @@ func Match_input_form(config Settings) (Match_data) {
 	game_select := huh.NewSelect[uint]().Title("Select Game:").Options(games_options...).Value(&match.game_id)
 
 	err = game_select.Run()
-	Error_check(err)
+	if err != nil {
+		return match, err
+	}
 
 	player_count_int,_ := strconv.ParseUint(player_count,10,64)
 	match.player_count = uint(player_count_int)
 
-	players := Query_players_all(config)
+	players, err := Query_players_all(config)
+	if err != nil {
+		return match, err
+	}
 	for i := 0; i < len(players); i++ {
 		option := huh.NewOption(players[i].name_first,players[i].id)
 		players_options = append(players_options, option)
@@ -50,7 +61,9 @@ func Match_input_form(config Settings) (Match_data) {
 
 	players_select := huh.NewMultiSelect[uint]().Title("Select Players:").Options(players_options...).Limit(int(player_count_int)).Value(&player_id)
 	err = players_select.Run()
-	Error_check(err)
+	if err != nil {
+		return match, err
+	}
 
 	player_data := make([]Player_data,len(player_id))
 
@@ -69,5 +82,5 @@ func Match_input_form(config Settings) (Match_data) {
 		score_inputs = append(score_inputs, *score_input)
 	}
 
-	return match
+	return match, nil
 }

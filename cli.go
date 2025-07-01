@@ -43,7 +43,7 @@ func Cli () error {
 	case "tui":
 		return tui_arg(2)
 	default:
-		fmt.Println("No argument given.")
+		fmt.Println("No argument given.") // TODO: REPLACE WITH --help TYPE OUTPUT.
 	}
 	return nil
 }
@@ -94,7 +94,10 @@ func csv_arg (arg_start_point uint) error {
 		}
 	case "match":
 		config.flags(os.Args[arg_start_point+3:])
-		matches, players := Match_populate(os.Args[arg_start_point+1],os.Args[arg_start_point+2])
+		matches, players, err := Match_populate(os.Args[arg_start_point+1],os.Args[arg_start_point+2])
+		if err != nil {
+			return err
+		}
 		Match_sort_insert(config, matches, players)
 	}
 	return nil
@@ -102,7 +105,10 @@ func csv_arg (arg_start_point uint) error {
 
 func tui_arg (arg_start_point uint) error {
 	config.flags(os.Args[arg_start_point:])
-	match := Match_input_form(config)
-	_, err := fmt.Println("Game ID: ",match.game_id,"Player Count: ",match.player_count)
+	match, err := Match_input_form(config)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Println("Game ID: ",match.game_id,"Player Count: ",match.player_count)
 	return err
 }

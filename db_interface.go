@@ -204,7 +204,10 @@ func Insert_from_table (db_driver string, db_loc string, t Table) (error) {
 
 func Csv_insert (csv_file string, table_type string) error { // Might rip this element out of this function later, since I don't know if it's going to be used again.
 	var t Table
-	csv_arr, rows := Import_from_csv(csv_file)
+	csv_arr, rows, err := Import_from_csv(csv_file)
+	if err != nil {
+		return err
+	}
 	format := csv_arr[0]
 	csv_args := csv_arr[1:]
 	switch table_type {
@@ -227,9 +230,15 @@ func Csv_insert (csv_file string, table_type string) error { // Might rip this e
 	return nil
 }
 
-func Match_populate (matches_csv string, players_csv string) ([]Match_data, []Player_data) {
-	match_arr, match_rows := Import_from_csv(matches_csv)
-	player_arr, player_rows := Import_from_csv(players_csv)
+func Match_populate (matches_csv string, players_csv string) ([]Match_data, []Player_data, error) {
+	match_arr, match_rows, err := Import_from_csv(matches_csv)
+	if err != nil {
+		return nil, nil, err
+	}
+	player_arr, player_rows, err := Import_from_csv(players_csv)
+	if err != nil {
+		return nil, nil, err
+	}
 	matches := make([]Match_data,match_rows)
 	players := make([]Player_data,player_rows)
 
@@ -247,7 +256,7 @@ func Match_populate (matches_csv string, players_csv string) ([]Match_data, []Pl
 		players[j].Populate_from_args(player_args[j],player_format)
 	}
 
-	return matches, players
+	return matches, players, nil
 }
 
 func Match_sort_insert (config Settings, matches []Match_data, players []Player_data) error {
@@ -415,11 +424,13 @@ func Query_name (config Settings) ([]Players, []string, error) {
 	return players, columns, err
 }
 
-func Query_games (config Settings) ([]Games, []string) {
+func Query_games (config Settings) ([]Games, []string, error) {
 	query := "SELECT * FROM games;"
 	result, err := Query(config, query)
 
-	Error_check(err)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	var (
 		game Games
@@ -428,14 +439,21 @@ func Query_games (config Settings) ([]Games, []string) {
 
 	defer result.Close()
 
-	columns,_ := result.Columns()
+	columns, err := result.Columns()
+
+	if err != nil {
+		return nil, nil, err
+	}
 
 	for result.Next() {
 		result.Scan(&game.id,&game.name,&game.ties_possible,&game.tie_breakers,&game.score_kept,&game.extensions)
 		games = append(games,game)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
-	return games, columns
+	return games, columns, nil
 }
 
 type Collated_player_stats struct {
@@ -444,28 +462,34 @@ type Collated_player_stats struct {
 	avg_score float64
 }
 
-func Query_players_all (config Settings) []Players {
+func Query_players_all (config Settings) ([]Players, error) {
 	var player Players
 	var players []Players
 
 	db, err := sql.Open(config.db_driver,config.db_address)
 	defer db.Close()
-	Error_check(err)
+	if err != nil {
+		return nil, err
+	}
 
 	query_result, err := db.Query("SELECT * FROM players;")
 	defer query_result.Close()
-	Error_check(err)
+	if err != nil {
+		return nil, err
+	}
 
 	for query_result.Next() {
 		err = query_result.Scan(&player.id,&player.name_first)
-		Error_check(err)
+		if err != nil {
+			return players, err
+		}
 		players = append(players, player)
 	}
 
-	return players
+	return players, nil
 }
 
-func Query_games_all (config Settings) []Games {
+func Query_games_all (config Settings) ([]Games, error) {
 	var (
 		game Games
 		games []Games
@@ -474,19 +498,25 @@ func Query_games_all (config Settings) []Games {
 
 	db, err := sql.Open(config.db_driver,config.db_address)
 	defer db.Close()
-	Error_check(err)
+	if err != nil {
+		return nil, err
+	}
 
 	query_result, err = db.Query("SELECT * FROM games;")
 	defer query_result.Close()
-	Error_check(err)
+	if err != nil {
+		return nil, err
+	}
 
 	for query_result.Next() {
 		err = query_result.Scan(&game.id,&game.name,&game.ties_possible,&game.tie_breakers,&game.score_kept,&game.extensions)
-		Error_check(err)
+		if err != nil {
+			return nil, err
+		}
 		games = append(games, game)
 	}
 
-	return games
+	return games, nil
 }
 
 
@@ -499,7 +529,9 @@ func Query_win_rate (config Settings,game uint,player_count uint) ([]Collated_pl
 	)
 	db, err := sql.Open(config.db_driver,config.db_address)
 	defer db.Close()
-	Error_check(err)
+	if err != nil {
+		return nil, err
+	}
 
 	if player_count == 0 {
 		win_rate_query, err = db.Prepare(`
@@ -516,7 +548,9 @@ func Query_win_rate (config Settings,game uint,player_count uint) ([]Collated_pl
 		JOIN players ON players.id = player_data.player_id
 		GROUP BY players.name_first;
 		`)
-		Error_check(err)
+		if err != nil {
+			return nil, err
+		}
 		result, err = win_rate_query.Query(game,game,game,game)
 
 	} else {
@@ -535,12 +569,16 @@ func Query_win_rate (config Settings,game uint,player_count uint) ([]Collated_pl
 		WHERE match_data.player_count = $5
 		GROUP BY players.name_first;
 		`)
-		Error_check(err)
+		if err != nil {
+			return nil, err
+		}
 		result, err = win_rate_query.Query(game,game,game,game,player_count)
 	}
 
 	defer result.Close()
-	Error_check(err)
+	if err != nil {
+		return nil, err
+	}
 
 	for result.Next() {	
 		result.Scan(&stats.name,&stats.win_rate,&stats.avg_score)
