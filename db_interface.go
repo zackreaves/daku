@@ -509,7 +509,7 @@ func Query_games_all (config Settings) ([]Games, error) {
 	}
 
 	for query_result.Next() {
-		err = query_result.Scan(&game.id,&game.name,&game.ties_possible,&game.tie_breakers,&game.score_kept,&game.extensions)
+		err = query_result.Scan(&game.id,&game.name,&game.ties_possible,&game.tie_breakers,&game.score_kept,&game.extensions,&game.round_end_attribution,&game.dealers)
 		if err != nil {
 			return nil, err
 		}
