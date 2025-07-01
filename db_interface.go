@@ -20,7 +20,7 @@ type Players struct {
 }
 
 func (p *Players) Populate_from_args (args []string, format []string) {
-	for i := 0; i < len(args); i++ {
+	for i := range len(args) {
 		switch format[i] {
 		case "id":
 			id,_ := strconv.ParseUint(args[i],10,64)	
@@ -33,11 +33,12 @@ func (p *Players) Populate_from_args (args []string, format []string) {
 
 func (p Players) Insert (db_driver string, db_loc string) (error) {
 	db, err_open := sql.Open(db_driver, db_loc)
-	defer db.Close()
 
 	if err_open != nil {
 		return err_open
 	}
+
+	defer db.Close()
 
 	_, err_exec := db.Exec("INSERT INTO players (name_first) VALUES ($1)", p.name_first)
 
@@ -56,7 +57,7 @@ type Games struct {
 }
 
 func (g *Games) Populate_from_args (args []string, format []string) {
-	for i := 0; i < len(args); i++ {
+	for i := range len(args) {
 		switch format[i] {
 		case "name":
 			g.name = args[i]
@@ -81,10 +82,10 @@ func (g *Games) Populate_from_args (args []string, format []string) {
 
 func (g Games) Insert (db_driver string, db_loc string) (error) {
 	db, err_open := sql.Open(db_driver,db_loc)	
-	defer db.Close()
 	if err_open != nil {
 		return err_open
 	}
+	defer db.Close()
 
 	_, err_exec := db.Exec("INSERT INTO games (name,ties_possible,tie_breakers,score_kept,round_extensions,round_end_attribution,dealers) VALUES ($1,$2,$3,$4,$5,$6,$7);",g.name,g.ties_possible,g.tie_breakers,g.score_kept,g.extensions,g.round_end_attribution,g.dealers)
 
@@ -101,7 +102,7 @@ type Match_data struct {
 }
 
 func (m *Match_data) Populate_from_args (args []string, format []string) {
-	for i := 0; i < len(args); i++ {
+	for i := range len(args) {
 		switch format[i] {
 		case "id":
 			id,_ := strconv.ParseUint(args[i],10,64)
@@ -130,10 +131,10 @@ func (m Match_data) Insert (db_driver string, db_loc string) (error) {
 	}
 
 	db, err_open := sql.Open(db_driver,db_loc)
-	defer db.Close()
 	if err_open != nil {
 		return err_open
 	}
+	defer db.Close()
 
 	_, err_exec := db.Exec("INSERT INTO match_data (game_id,round_count,date_time,player_count) VALUES ($1,$2,$3,$4);",m.game_id,m.round_count,m.date_time,m.player_count)
 
@@ -152,7 +153,7 @@ type Player_data struct {
 }
 
 func (p *Player_data) Populate_from_args (args []string, format []string) {
-	for i := 0; i < len(args); i++ {
+	for i := range len(args) {
 		switch format[i] {
 		case "player_id":
 			vuint,_ := strconv.ParseUint(args[i],10,64)
@@ -183,11 +184,10 @@ func (p *Player_data) Populate_from_args (args []string, format []string) {
 func (p Player_data) Insert (db_driver string, db_loc string) (error) {
 
 	db, err_open := sql.Open(db_driver,db_loc)
-	defer db.Close()
-
 	if err_open != nil {
 		return err_open
 	} 
+	defer db.Close()
 
 	_, err_exec := db.Exec("INSERT INTO player_data (player_id,match_id,score,win,ties,round_number,round_ender,dealer) VALUES ($1,$2,,$3,$4,$5,$6,$7,$8);", p.player_id,p.match_id,p.score,p.win,p.ties,p.round_number,p.round_ender,p.dealer)
 
@@ -467,16 +467,16 @@ func Query_players_all (config Settings) ([]Players, error) {
 	var players []Players
 
 	db, err := sql.Open(config.db_driver,config.db_address)
-	defer db.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer db.Close()
 
 	query_result, err := db.Query("SELECT * FROM players;")
-	defer query_result.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer query_result.Close()
 
 	for query_result.Next() {
 		err = query_result.Scan(&player.id,&player.name_first)
@@ -497,16 +497,16 @@ func Query_games_all (config Settings) ([]Games, error) {
 	)
 
 	db, err := sql.Open(config.db_driver,config.db_address)
-	defer db.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer db.Close()
 
 	query_result, err = db.Query("SELECT * FROM games;")
-	defer query_result.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer query_result.Close()
 
 	for query_result.Next() {
 		err = query_result.Scan(&game.id,&game.name,&game.ties_possible,&game.tie_breakers,&game.score_kept,&game.extensions,&game.round_end_attribution,&game.dealers)
@@ -528,10 +528,10 @@ func Query_win_rate (config Settings,game uint,player_count uint) ([]Collated_pl
 		result *sql.Rows
 	)
 	db, err := sql.Open(config.db_driver,config.db_address)
-	defer db.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer db.Close()
 
 	if player_count == 0 {
 		win_rate_query, err = db.Prepare(`
@@ -590,7 +590,7 @@ func Query_win_rate (config Settings,game uint,player_count uint) ([]Collated_pl
 
 func Print_win_rate (all_stats []Collated_player_stats) {
 	fmt.Println("Player: Win rate")
-	for i := 0; i < len(all_stats); i++ {
+	for i := range len(all_stats) {
 		if all_stats[i].win_rate != -1 {
 			fmt.Printf("%s: %.2f%s -- %.2f points on average \n", all_stats[i].name, all_stats[i].win_rate * 100, "%",all_stats[i].avg_score)
 		}
@@ -599,14 +599,14 @@ func Print_win_rate (all_stats []Collated_player_stats) {
 
 func Print_player_list (player_list []Players) {
 	fmt.Println("List of Players")
-	for i := 0; i < len(player_list); i++ {
+	for i := range len(player_list) {
 		fmt.Printf("%d - %s\n", player_list[i].id, player_list[i].name_first)
 	}
 }
 
 func Print_game_list (game_list []Games) {
 	fmt.Println("List of Games")
-	for i := 0; i < len(game_list); i++ {
+	for i := range len(game_list) {
 		fmt.Printf("%d - %s\n", game_list[i].id, game_list[i].name)
 	}
 }

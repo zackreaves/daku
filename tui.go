@@ -35,7 +35,7 @@ func Match_input_form(config Settings) (Match_data, error) {
 		return match, err
 	}
 
-	for i := 0; i < len(games); i++ {
+	for i := range len(games) {
 		option := huh.NewOption(games[i].name,games[i].id)
 		games_options = append(games_options, option)
 	}
@@ -54,7 +54,7 @@ func Match_input_form(config Settings) (Match_data, error) {
 	if err != nil {
 		return match, err
 	}
-	for i := 0; i < len(players); i++ {
+	for i := range len(players) {
 		option := huh.NewOption(players[i].name_first,players[i].id)
 		players_options = append(players_options, option)
 	}
@@ -67,7 +67,7 @@ func Match_input_form(config Settings) (Match_data, error) {
 
 	player_data := make([]Player_data,len(player_id))
 
-	for i := 0; i < len(player_data); i++ {
+	for i := range len(player_data) {
 		player_data[i].player_id = player_id[i]
 
 		score_input := huh.NewInput().Validate(func (player_count string) error {
