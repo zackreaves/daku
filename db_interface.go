@@ -446,7 +446,7 @@ func Query_games (config Settings) ([]Games, []string, error) {
 	}
 
 	for result.Next() {
-		result.Scan(&game.id,&game.name,&game.ties_possible,&game.tie_breakers,&game.score_kept,&game.extensions)
+		result.Scan(&game.id,&game.name,&game.ties_possible,&game.tie_breakers,&game.score_kept,&game.extensions,&game.round_end_attribution,&game.dealers)
 		games = append(games,game)
 		if err != nil {
 			return nil, nil, err
@@ -590,9 +590,23 @@ func Query_win_rate (config Settings,game uint,player_count uint) ([]Collated_pl
 
 func Print_win_rate (all_stats []Collated_player_stats) {
 	fmt.Println("Player: Win rate")
-	for i := 0; i < len(all_stats); i++{
+	for i := 0; i < len(all_stats); i++ {
 		if all_stats[i].win_rate != -1 {
 			fmt.Printf("%s: %.2f%s -- %.2f points on average \n", all_stats[i].name, all_stats[i].win_rate * 100, "%",all_stats[i].avg_score)
 		}
+	}
+}
+
+func Print_player_list (player_list []Players) {
+	fmt.Println("List of Players")
+	for i := 0; i < len(player_list); i++ {
+		fmt.Printf("%d - %s\n", player_list[i].id, player_list[i].name_first)
+	}
+}
+
+func Print_game_list (game_list []Games) {
+	fmt.Println("List of Games")
+	for i := 0; i < len(game_list); i++ {
+		fmt.Printf("%d - %s\n", game_list[i].id, game_list[i].name)
 	}
 }

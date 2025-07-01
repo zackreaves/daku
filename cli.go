@@ -57,14 +57,18 @@ func list_arg (arg_start_point uint) error {
 	switch os.Args[arg_start_point] {
 	case "players":
 		config.flags(os.Args[arg_start_point+1:])
-		_, col, err := Query_name(config)
+		player_list, _, err := Query_name(config)
 		if err != nil {
 			return err
 		}
-		fmt.Println(col) // TODO: ADD COMPONENT TO ACTUALLY PRINT PLAYER NAMES.
+		Print_player_list(player_list)
 	case "games":
 		config.flags(os.Args[arg_start_point+1:])
-		Query_games(config)
+		game_list, _, err := Query_games(config)
+		if err != nil {
+			return err
+		}
+		Print_game_list(game_list)
 	case "winrates":
 		config.flags(os.Args[arg_start_point+3:])
 		game, err := strconv.ParseUint(os.Args[arg_start_point+1],10,64)
