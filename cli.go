@@ -28,14 +28,11 @@ func (s *Settings ) flags (arguments []string) {
 	}
 }
 
-func (s *Settings) driver_chooser () {
-	s.db_driver = "postgres"
+var config = Settings {
+	db_driver: "postgres",
 }
 
-var config Settings
-
 func Cli () {
-	config.driver_chooser()
 	switch os.Args[1] {
 	case "init":
 		config.flags(os.Args[2:])
