@@ -6,7 +6,6 @@ import (
 	"log"
 	"strconv"
 
-	_ "github.com/mattn/go-sqlite3"
 	_ "github.com/lib/pq"
 )
 
@@ -20,7 +19,7 @@ type Players struct {
 	name_first string
 }
 
-func (p *Players) Populate_from_args(args []string, format []string) {
+func (p *Players) Populate_from_args (args []string, format []string) {
 	for i := 0; i < len(args); i++ {
 		switch format[i] {
 		case "id":
@@ -203,7 +202,7 @@ func Insert_from_table (db_driver string, db_loc string, t Table) (error) {
 	return t.Insert(db_driver, db_loc)
 }
 
-func Csv_insert (csv_file string, table_type string) { // Might rip this element out of this function later, since I don't know if it's going to be used again.
+func Csv_insert (csv_file string, table_type string) error { // Might rip this element out of this function later, since I don't know if it's going to be used again.
 	var t Table
 	csv_arr, rows := Import_from_csv(csv_file)
 	format := csv_arr[0]
@@ -221,8 +220,11 @@ func Csv_insert (csv_file string, table_type string) { // Might rip this element
 	for i := 0; i < rows-1 ; i++ {
 		Populate_from_arguments(csv_args[i], format, t)
 		err := Insert_from_table(config.db_driver,config.db_address,t)
-		Error_check(err)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func Match_populate (matches_csv string, players_csv string) ([]Match_data, []Player_data) {
@@ -248,37 +250,54 @@ func Match_populate (matches_csv string, players_csv string) ([]Match_data, []Pl
 	return matches, players
 }
 
-func Match_sort_insert (config Settings, matches []Match_data, players []Player_data) {
+func Match_sort_insert (config Settings, matches []Match_data, players []Player_data) error {
 
 		db, err := sql.Open(config.db_driver,config.db_address)
-		Error_check(err)
+		if err != nil {
+			return err
+		}
 		defer db.Close()
 
 		tx, err := db.Begin()
-		Error_check(err)
+		if err != nil {
+			return err
+		}
 		defer tx.Rollback()
 
 		match_stmt, err := tx.Prepare("INSERT INTO match_data (game_id,round_count,date_time,player_count) VALUES ($1,$2,$3,$4);")
-		Error_check(err)
+		if err != nil {
+			return err
+		}
 
 		player_stmt, err := tx.Prepare("INSERT INTO player_data (match_id,player_id,win,score,ties,round_number,round_ender,dealer) VALUES ((SELECT MAX (id) FROM match_data),$1,$2,$3,$4,$5,$6,$7);")
-		Error_check(err)
+		if err != nil {
+			return err
+		}
 
 		defer match_stmt.Close()
 		defer player_stmt.Close()
 
 		for i := 0; i < len(matches)-1; i++ {
 			_, err := match_stmt.Exec(matches[i].game_id, matches[i].round_count, matches[i].date_time, matches[i].player_count)
-			Error_check(err)
+			if err != nil {
+				return err
+			}
 			for j := 0; j < len(players)-1; j++ {
 				if players[j].match_id == matches[i].id {
 					_,err = player_stmt.Exec(players[j].player_id, players[j].win, players[j].score, players[j].ties, players[j].round_number)
-					Error_check(err)
+					if err != nil {
+						return err
+					}
 				}
 			}
 		}
 
-		Error_check(tx.Commit())
+		err = tx.Commit()
+		if err != nil {
+			return err
+		}
+
+		return nil
 }
 
 func Error_check(err error) {
@@ -287,63 +306,16 @@ func Error_check(err error) {
 	}
 }
 
-func Init (config Settings) {
+func Init (config Settings) error {
 	fmt.Println(config.db_driver)
 	fmt.Println(config.db_address)
 	switch config.db_driver {
-	case "sqlite3":
-	db, err_open := sql.Open(config.db_driver,"file:" + config.db_address + "?_foreign_keys=true")
-
-	Error_check(err_open)
-
-	defer db.Close()
-
-		_, err_players := db.Exec(`
-			CREATE TABLE IF NOT EXISTS "players" (
-				"id" INTEGER PRIMARY KEY AUTOINCREMENT,
-				"name_first" VARCHAR(80)
-			);
-		`)
-		Error_check(err_players)
-		_, err_games := db.Exec(`
-			CREATE TABLE IF NOT EXISTS "games" (
-				"id" INTEGER PRIMARY KEY AUTOINCREMENT,
-				"name" VARCHAR(80),
-				"ties_possible" BOOLEAN,
-				"tie_breakers" BOOLEAN,
-				"score_kept" BOOLEAN,
-				"round_extensions" BOOLEAN
-			);
-		`)
-		Error_check(err_games)
-		_, err_match_data := db.Exec(`
-			CREATE TABLE IF NOT EXISTS "match_data" (
-				"id" INTEGER PRIMARY KEY AUTOINCREMENT,
-				"game_id" INTEGER NOT NULL,
-				"round_count" INTEGER NOT NULL,
-				"player_count" INTEGER NOT NULL,
-				"date_time" DATETIME DEFAULT (datetime('now','localtime')),
-				FOREIGN KEY("game_id") REFERENCES games("id")
-			);
-		`)
-		Error_check(err_match_data)
-		_, err_player_data := db.Exec(`
-			CREATE TABLE IF NOT EXISTS "player_data" (
-				"match_id" INTEGER DEFAULT (SELECT last_insert_rowid FROM match_data),
-				"player_id" INTEGER NOT NULL,
-				"win" BOOLEAN NULL,
-				"score" REAL NULL,
-				"tie" BOOLEAN NULL,
-				"round_number" INTEGER DEFAULT 1,
-				FOREIGN KEY("match_id") REFERENCES match_data("id"),
-				FOREIGN KEY("player_id") REFERENCES players("id")
-			);
-		`)
-		Error_check(err_player_data)
 	case "postgres":
 		db, err_open := sql.Open(config.db_driver,config.db_address)
 
-		Error_check(err_open)
+		if err_open != nil {
+			return err_open
+		}
 
 		defer db.Close()
 
@@ -380,40 +352,52 @@ func Init (config Settings) {
 				"round_ender" BOOLEAN DEFAULT NULL
 			);
 		`)
-		Error_check(err_exec)
+		if err_exec != nil {
+			return err_exec
+		}
 	default:
-		fmt.Println("Supported databases include postgres and sqlite3.\n You can set the database using the DAKU_SQL_SERVICE environment variable.")
+		return fmt.Errorf("Postgres is currently the only supported Database.")
 	}
+	return nil
 }
 
-func Query (config Settings, query string) *sql.Rows {
+func Query (config Settings, query string) (*sql.Rows, error) {
 
 	var ( 
 		db *sql.DB
-		err_open error	
+		err_open error
 	)
 
 	switch config.db_driver {
-	case "sqlite3":
-		db, err_open = sql.Open("sqlite3","file:" + config.db_address + "?_foreign_keys=true")
 	case "postgres":
 		db, err_open = sql.Open("postgres",config.db_address)
+	default:
+		return nil, fmt.Errorf("UNSUPPORTED DATABASE: %s", config.db_driver)
 	}
 
-	Error_check(err_open)
+	if err_open != nil {
+		return nil, err_open
+	}
 
 	defer db.Close()
 
 	result, err_query := db.Query(query)
 
-	Error_check(err_query)
+	if err_query != nil {
+		return result, err_query
+	}
 
-	return result
+	return result, nil
 }
 
-func Query_name (config Settings) ([]Players, []string) {
+func Query_name (config Settings) ([]Players, []string, error) {
 	query := "SELECT * FROM players;"
-	result := Query(config, query)
+	result, err := Query(config, query)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
 	var (
 		player Players
 		players []Players
@@ -428,12 +412,15 @@ func Query_name (config Settings) ([]Players, []string) {
 		players = append(players, player)
 	}
 
-	return players, columns
+	return players, columns, err
 }
 
 func Query_games (config Settings) ([]Games, []string) {
 	query := "SELECT * FROM games;"
-	result := Query(config, query)
+	result, err := Query(config, query)
+
+	Error_check(err)
+
 	var (
 		game Games
 		games []Games
