@@ -98,7 +98,10 @@ func csv_arg (arg_start_point uint) error {
 		if err != nil {
 			return err
 		}
-		Match_sort_insert(config, matches, players)
+		err = Match_sort_insert(config, matches, players)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
