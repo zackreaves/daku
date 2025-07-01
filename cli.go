@@ -33,18 +33,25 @@ var config = Settings {
 }
 
 func Cli () error {
-	switch os.Args[1] {
-	case "init":
-		return init_arg(2)
-	case "list":
-		return list_arg(2)
-	case "csv":
-		csv_arg(2)
-	case "tui":
-		return tui_arg(2)
-	default:
-		fmt.Println("No argument given.") // TODO: REPLACE WITH --help TYPE OUTPUT.
-	}
+	if len(os.Args) >= 2 {
+		switch os.Args[1] {
+		case "init":
+			return init_arg(2)
+		case "list":
+			return list_arg(2)
+		case "csv":
+			csv_arg(2)
+		case "tui":
+			return tui_arg(2)
+			}
+		} else {
+			fmt.Println("No argument given.")
+			fmt.Println("init - initialize database tables.")
+			fmt.Println("list {players,games,winrates game.id match_data.player_count} - lists players, games, and winrates")
+			fmt.Println("csv {table {players, games, match_data, player_data} csv_path, match match_data_path player_data_path} - imports data from csv, best to use match option.")
+			fmt.Println("tui - starts incomplete tui form.")
+		}
+	
 	return nil
 }
 
