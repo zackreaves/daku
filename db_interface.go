@@ -293,7 +293,7 @@ func Match_sort_insert (config Settings, matches []Match_data, players []Player_
 			}
 			for j := 0; j < len(players)-1; j++ {
 				if players[j].match_id == matches[i].id {
-					_,err = player_stmt.Exec(players[j].player_id, players[j].win, players[j].score, players[j].ties, players[j].round_number)
+					_,err = player_stmt.Exec(players[j].player_id, players[j].win, players[j].score, players[j].ties, players[j].round_number, players[j].round_ender, players[j].dealer)
 					if err != nil {
 						return err
 					}
