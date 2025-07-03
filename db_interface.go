@@ -81,6 +81,7 @@ func (g *Games) Populate_from_args (args []string, format []string) {
 }
 
 func (g Games) Insert (db_driver string, db_loc string) (error) {
+
 	db, err_open := sql.Open(db_driver,db_loc)	
 	if err_open != nil {
 		return err_open
@@ -102,6 +103,7 @@ type Match_data struct {
 }
 
 func (m *Match_data) Populate_from_args (args []string, format []string) {
+
 	for i := range len(args) {
 		switch format[i] {
 		case "id":
@@ -126,6 +128,7 @@ func (m *Match_data) Populate_from_args (args []string, format []string) {
 }
 
 func (m Match_data) Insert (db_driver string, db_loc string) (error) {
+
 	if m.relative_id {
 		return fmt.Errorf("INSERT INTO match_data FAILED: only absolute id is allowed.")
 	}
@@ -203,13 +206,16 @@ func Insert_from_table (db_driver string, db_loc string, t Table) (error) {
 }
 
 func Csv_insert (csv_file string, table_type string) error { // Might rip this element out of this function later, since I don't know if it's going to be used again.
+
 	var t Table
 	csv_arr, rows, err := Import_from_csv(csv_file)
 	if err != nil {
 		return err
 	}
+
 	format := csv_arr[0]
 	csv_args := csv_arr[1:]
+
 	switch table_type {
 	case "players":
 		t = &Players{}
@@ -220,6 +226,7 @@ func Csv_insert (csv_file string, table_type string) error { // Might rip this e
 	case "player_data":
 		t = &Player_data{}
 	}
+
 	for i := 0; i < rows-1 ; i++ {
 		Populate_from_arguments(csv_args[i], format, t)
 		err := Insert_from_table(config.db_driver,config.db_address,t)
@@ -227,18 +234,22 @@ func Csv_insert (csv_file string, table_type string) error { // Might rip this e
 			return err
 		}
 	}
+
 	return nil
 }
 
 func Match_populate (matches_csv string, players_csv string) ([]Match_data, []Player_data, error) {
+
 	match_arr, match_rows, err := Import_from_csv(matches_csv)
 	if err != nil {
 		return nil, nil, err
 	}
+
 	player_arr, player_rows, err := Import_from_csv(players_csv)
 	if err != nil {
 		return nil, nil, err
 	}
+
 	matches := make([]Match_data,match_rows)
 	players := make([]Player_data,player_rows)
 
@@ -277,13 +288,12 @@ func Match_sort_insert (config Settings, matches []Match_data, players []Player_
 		if err != nil {
 			return err
 		}
+		defer match_stmt.Close()
 
 		player_stmt, err := tx.Prepare("INSERT INTO player_data (match_id,player_id,win,score,ties,round_number,round_ender,dealer) VALUES ((SELECT MAX (id) FROM match_data),$1,$2,$3,$4,$5,$6,$7);")
 		if err != nil {
 			return err
 		}
-
-		defer match_stmt.Close()
 		defer player_stmt.Close()
 
 		for i := 0; i < len(matches)-1; i++ {
@@ -309,15 +319,17 @@ func Match_sort_insert (config Settings, matches []Match_data, players []Player_
 		return nil
 }
 
-func Error_check(err error) {
+func Error_check (err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
 func Init (config Settings) error {
+
 	fmt.Println(config.db_driver)
 	fmt.Println(config.db_address)
+
 	switch config.db_driver {
 	case "postgres":
 		db, err_open := sql.Open(config.db_driver,config.db_address)
@@ -361,12 +373,14 @@ func Init (config Settings) error {
 				"round_ender" BOOLEAN DEFAULT NULL
 			);
 		`)
+
 		if err_exec != nil {
 			return err_exec
 		}
 	default:
 		return fmt.Errorf("Postgres is currently the only supported Database.")
 	}
+
 	return nil
 }
 
@@ -400,6 +414,7 @@ func Query (config Settings, query string) (*sql.Rows, error) {
 }
 
 func Query_name (config Settings) ([]Players, []string, error) {
+
 	query := "SELECT * FROM players;"
 	result, err := Query(config, query)
 
@@ -417,7 +432,10 @@ func Query_name (config Settings) ([]Players, []string, error) {
 	columns,_ := result.Columns()
 
 	for result.Next() {
-		result.Scan(&player.id, &player.name_first)
+		err = result.Scan(&player.id, &player.name_first)
+		if err != nil {
+			return players, columns, err
+		}
 		players = append(players, player)
 	}
 
@@ -425,6 +443,7 @@ func Query_name (config Settings) ([]Players, []string, error) {
 }
 
 func Query_games (config Settings) ([]Games, []string, error) {
+
 	query := "SELECT * FROM games;"
 	result, err := Query(config, query)
 
@@ -446,10 +465,11 @@ func Query_games (config Settings) ([]Games, []string, error) {
 	}
 
 	for result.Next() {
-		result.Scan(&game.id,&game.name,&game.ties_possible,&game.tie_breakers,&game.score_kept,&game.extensions,&game.round_end_attribution,&game.dealers)
+		err = result.Scan(&game.id,&game.name,&game.ties_possible,&game.tie_breakers,&game.score_kept,&game.extensions,&game.round_end_attribution,&game.dealers)
 		games = append(games,game)
+
 		if err != nil {
-			return nil, nil, err
+			return games, columns, err
 		}
 	}
 
@@ -463,6 +483,7 @@ type Collated_player_stats struct {
 }
 
 func Query_players_all (config Settings) ([]Players, error) {
+
 	var player Players
 	var players []Players
 
@@ -470,6 +491,7 @@ func Query_players_all (config Settings) ([]Players, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	defer db.Close()
 
 	query_result, err := db.Query("SELECT * FROM players;")
@@ -527,10 +549,12 @@ func Query_win_rate (config Settings,game uint,player_count uint) ([]Collated_pl
 		all_stats []Collated_player_stats
 		result *sql.Rows
 	)
+
 	db, err := sql.Open(config.db_driver,config.db_address)
 	if err != nil {
 		return nil, err
 	}
+
 	defer db.Close()
 
 	if player_count == 0 {
@@ -548,10 +572,16 @@ func Query_win_rate (config Settings,game uint,player_count uint) ([]Collated_pl
 		JOIN players ON players.id = player_data.player_id
 		GROUP BY players.name_first;
 		`)
+
 		if err != nil {
 			return nil, err
 		}
+
 		result, err = win_rate_query.Query(game,game,game,game)
+
+		if err != nil {
+			return nil, err
+		}
 
 	} else {
 		win_rate_query, err = db.Prepare(`
@@ -569,19 +599,27 @@ func Query_win_rate (config Settings,game uint,player_count uint) ([]Collated_pl
 		WHERE match_data.player_count = $5
 		GROUP BY players.name_first;
 		`)
+
 		if err != nil {
 			return nil, err
 		}
+
 		result, err = win_rate_query.Query(game,game,game,game,player_count)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	defer result.Close()
-	if err != nil {
-		return nil, err
-	}
 
 	for result.Next() {	
-		result.Scan(&stats.name,&stats.win_rate,&stats.avg_score)
+		err = result.Scan(&stats.name,&stats.win_rate,&stats.avg_score)
+
+		if err != nil {
+			return all_stats, err
+		}
+
 		all_stats = append(all_stats,stats)
 	}
 

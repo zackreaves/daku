@@ -55,7 +55,7 @@ func Cli () error {
 	return nil
 }
 
-func init_arg(arg_start_point uint) error {
+func init_arg (arg_start_point uint) error {
 		config.flags(os.Args[arg_start_point:])
 		return Init(config)
 }
@@ -68,7 +68,7 @@ func list_arg (arg_start_point uint) error {
 		if err != nil {
 			return err
 		}
-		Print_player_list(player_list)
+		Print_player_list (player_list)
 	case "games":
 		config.flags(os.Args[arg_start_point+1:])
 		game_list, _, err := Query_games(config)
