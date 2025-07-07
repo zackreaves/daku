@@ -550,12 +550,17 @@ func Query_win_rate (config Settings,game uint,player_count uint) ([]Collated_pl
 		result *sql.Rows
 	)
 
+	if game == 0 {
+		return nil, fmt.Errorf("Choose game.")
+	}
+
 	db, err := sql.Open(config.db_driver,config.db_address)
 	if err != nil {
 		return nil, err
 	}
 
 	defer db.Close()
+
 
 	if player_count == 0 {
 		win_rate_query, err = db.Prepare(`
@@ -566,7 +571,11 @@ func Query_win_rate (config Settings,game uint,player_count uint) ([]Collated_pl
 			THEN (COUNT(player_data.win) FILTER (WHERE player_data.win = true AND match_data.game_id = $2))::float / (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $3))::float
 			ELSE -1
 		END as win_rate,
-		AVG(player_data.score) FILTER (WHERE match_data.game_id = $4) as average_score
+		CASE
+			WHEN (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $4)) > 0
+			THEN AVG(player_data.score) FILTER (WHERE match_data.game_id = $5)
+			ELSE 0
+		END as average_score
 		FROM player_data
 		JOIN match_data ON match_data.id = player_data.match_id
 		JOIN players ON players.id = player_data.player_id
@@ -577,7 +586,7 @@ func Query_win_rate (config Settings,game uint,player_count uint) ([]Collated_pl
 			return nil, err
 		}
 
-		result, err = win_rate_query.Query(game,game,game,game)
+		result, err = win_rate_query.Query(game,game,game,game,game)
 
 		if err != nil {
 			return nil, err
@@ -592,11 +601,15 @@ func Query_win_rate (config Settings,game uint,player_count uint) ([]Collated_pl
 			THEN (COUNT(player_data.win) FILTER (WHERE player_data.win = true AND match_data.game_id = $2))::float / (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $3))::float
 			ELSE -1
 		END as win_rate,
-		AVG(player_data.score) FILTER (WHERE match_data.game_id = $4) as average_score
+		CASE
+			WHEN (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $4)) > 0
+			THEN AVG(player_data.score) FILTER (WHERE match_data.game_id = $5)
+			ELSE 0
+		END as average_score
 		FROM player_data
 		JOIN match_data ON match_data.id = player_data.match_id
 		JOIN players ON players.id = player_data.player_id
-		WHERE match_data.player_count = $5
+		WHERE match_data.player_count = $6
 		GROUP BY players.name_first;
 		`)
 
@@ -604,7 +617,7 @@ func Query_win_rate (config Settings,game uint,player_count uint) ([]Collated_pl
 			return nil, err
 		}
 
-		result, err = win_rate_query.Query(game,game,game,game,player_count)
+		result, err = win_rate_query.Query(game,game,game,game,game,player_count)
 
 		if err != nil {
 			return nil, err
