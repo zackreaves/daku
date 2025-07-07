@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strconv"
 )
 
 type Settings struct {
@@ -12,13 +11,14 @@ type Settings struct {
 	db_driver string
 }
 
-func (s *Settings ) flags (arguments []string) {
+func (s *Settings ) flags (arguments []string) (error) {
 	var (
 		arg_flags *flag.FlagSet = flag.NewFlagSet("arg_flags", flag.ExitOnError)
 		db_address_override *string = arg_flags.String("a","","Override environmental variables.")
 	)
 
-	arg_flags.Parse(arguments)
+
+	err := arg_flags.Parse(arguments)
 
 	if *db_address_override == "" {
 		s.db_address, _ = os.LookupEnv("DAKU_DB_ADDRESS")
@@ -26,6 +26,27 @@ func (s *Settings ) flags (arguments []string) {
 		s.db_address = *db_address_override
 		fmt.Println("Set DAKU_DB in your shell environment.")
 	}
+
+	return err
+}
+
+func list_flags (arguments []string) (*uint, *uint, error) {
+	var (
+		list_flags *flag.FlagSet = flag.NewFlagSet("list_flags", flag.ExitOnError)
+		player_count = list_flags.Uint("c",0,"Set player count.")
+		game_id = list_flags.Uint("g",1,"Set numerical game id.")
+		db_address_override *string = list_flags.String("a","","Override environmental variables.")
+	)
+
+	err := list_flags.Parse(arguments)
+	if *db_address_override == "" {
+		config.db_address, _ = os.LookupEnv("DAKU_DB_ADDRESS")
+	} else {
+		config.db_address = *db_address_override
+		fmt.Println("Set DAKU_DB in your shell environment.")
+	}
+
+	return player_count, game_id, err
 }
 
 var config = Settings {
@@ -40,7 +61,7 @@ func Cli () error {
 		case "list":
 			return list_arg(2)
 		case "csv":
-			csv_arg(2)
+			return csv_arg(2)
 		case "tui":
 			return tui_arg(2)
 			}
@@ -77,16 +98,8 @@ func list_arg (arg_start_point uint) error {
 		}
 		Print_game_list(game_list)
 	case "winrates":
-		config.flags(os.Args[arg_start_point+3:])
-		game, err := strconv.ParseUint(os.Args[arg_start_point+1],10,64)
-		if err != nil {
-			return err
-		}
-		player_num, err := strconv.ParseUint(os.Args[arg_start_point+2],10,64)
-		if err != nil {
-			return err
-		}
-		win_rates, err := Query_win_rate(config,uint(game),uint(player_num))
+		player_num, game_id, _ := list_flags(os.Args[arg_start_point+3:])
+		win_rates, err := Query_win_rate(config,*game_id,*player_num)
 		if err != nil {
 			return err
 		}
