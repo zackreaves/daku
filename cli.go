@@ -30,16 +30,21 @@ func (s *Settings ) flags (arguments []string) (error) {
 	return err
 }
 
-func list_flags (arguments []string) (uint, uint, error) {
+func list_flags (arguments []string) (uint, uint, int, error) {
 	var (
 		list_flags *flag.FlagSet = flag.NewFlagSet("list_flags", flag.ExitOnError)
 		player_count uint
 		game_id uint
+		round int
 		db_address_override *string = list_flags.String("a","","Override environmental variable.")
 	)
-	list_flags.UintVar(&game_id, "g", 0, "TEST")
-	list_flags.UintVar(&player_count, "c", 0, "TEST")
+
+	list_flags.UintVar(&game_id, "g", 0, "Enter game id.")
+	list_flags.UintVar(&player_count, "c", 0, "Enter number of players")
+	list_flags.IntVar(&round,"r",1, "Enter which round is of interest, 0 returns the aggregate and anything less returns the last round's values.")
+
 	err := list_flags.Parse(arguments)
+
 	if *db_address_override == "" {
 		config.db_address, _ = os.LookupEnv("DAKU_DB_ADDRESS")
 	} else {
@@ -47,7 +52,7 @@ func list_flags (arguments []string) (uint, uint, error) {
 		fmt.Println("Set DAKU_DB in your shell environment.")
 	}
 
-	return game_id, player_count, err
+	return game_id, player_count, round, err
 }
 
 var config = Settings {
@@ -99,8 +104,8 @@ func list_arg (arg_start_point uint) error {
 		}
 		Print_game_list(game_list)
 	case "winrates":
-		game_id, player_num, _ := list_flags(os.Args[arg_start_point+1:])
-		win_rates, err := Query_win_rate(config,game_id,player_num)
+		game_id, player_num, round_num, _ := list_flags(os.Args[arg_start_point+1:])
+		win_rates, err := Query_win_rate(config,game_id,player_num,round_num)
 		if err != nil {
 			return err
 		}
