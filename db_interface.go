@@ -568,18 +568,19 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int) ([]C
 			SELECT
 			players.name_first AS name,
 			CASE
-				WHEN (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $1 AND player_data.round_number = $2)) > 0
-				THEN (COUNT(player_data.win) FILTER (WHERE player_data.win = true AND match_data.game_id = $3 AND player_data.round_number = $4))::float / (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $5 AND player_data.round_number = $6))::float
+				WHEN (COUNT(player_data.win)) > 0
+				THEN (COUNT(player_data.win) FILTER (WHERE player_data.win = true))::float / (COUNT(player_data.win))::float
 				ELSE -1
 			END as win_rate,
 			CASE
-				WHEN (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $7 AND player_data.round_number = $8)) > 0
-				THEN AVG(player_data.score) FILTER (WHERE match_data.game_id = $9 AND player_data.round_number = $10)
+				WHEN (COUNT(player_data.win)) > 0
+				THEN AVG(player_data.score)
 				ELSE 0
 			END as average_score
 			FROM player_data
 			JOIN match_data ON match_data.id = player_data.match_id
 			JOIN players ON players.id = player_data.player_id
+			WHERE match_data.game_id = $1 AND player_data.round_number = $2
 			GROUP BY players.name_first;
 			`)
 
@@ -587,7 +588,7 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int) ([]C
 				return nil, err
 			}
 
-			result, err = win_rate_query.Query(game,round,game,round,game,round,game,round,game,round)
+			result, err = win_rate_query.Query(game,round)
 
 			if err != nil {
 				return nil, err
@@ -598,18 +599,19 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int) ([]C
 			SELECT
 			players.name_first AS name,
 			CASE
-				WHEN (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $1 AND player_data.round_number = match_data.round_count)) > 0
-				THEN (COUNT(player_data.win) FILTER (WHERE player_data.win = true AND match_data.game_id = $2 AND player_data.round_number = match_data.round_count))::float / (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $3 AND player_data.round_number = match_data.round_count))::float
+				WHEN (COUNT(player_data.win)) > 0
+				THEN (COUNT(player_data.win) FILTER (WHERE player_data.win = true))::float / (COUNT(player_data.win))::float
 				ELSE -1
 			END as win_rate,
 			CASE
-				WHEN (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $4 AND player_data.round_number = match_data.round_count)) > 0
-				THEN AVG(player_data.score) FILTER (WHERE match_data.game_id = $5 AND player_data.round_number = match_data.round_count)
+				WHEN (COUNT(player_data.win)) > 0
+				THEN AVG(player_data.score)
 				ELSE 0
 			END as average_score
 			FROM player_data
 			JOIN match_data ON match_data.id = player_data.match_id
 			JOIN players ON players.id = player_data.player_id
+			WHERE player_data.round_number = match_data.round_count AND match_data.game_id = $1
 			GROUP BY players.name_first;
 			`)
 
@@ -617,7 +619,7 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int) ([]C
 				return nil, err
 			}
 
-			result, err = win_rate_query.Query(game,game,game,game,game)
+			result, err = win_rate_query.Query(game)
 
 			if err != nil {
 				return nil, err
@@ -628,18 +630,19 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int) ([]C
 			SELECT
 			players.name_first AS name,
 			CASE
-				WHEN (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $1)) > 0
-				THEN (COUNT(player_data.win) FILTER (WHERE player_data.win = true AND match_data.game_id = $2))::float / (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $3))::float
+				WHEN (COUNT(player_data.win)) > 0
+				THEN (COUNT(player_data.win) FILTER (WHERE player_data.win = true))::float / (COUNT(player_data.win))::float
 				ELSE -1
 			END as win_rate,
 			CASE
-				WHEN (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $4)) > 0
-				THEN AVG(player_data.score) FILTER (WHERE match_data.game_id = $5)
+				WHEN (COUNT(player_data.win)) > 0
+				THEN AVG(player_data.score)
 				ELSE 0
 			END as average_score
 			FROM player_data
 			JOIN match_data ON match_data.id = player_data.match_id
 			JOIN players ON players.id = player_data.player_id
+			WHERE match_data.game_id = $1
 			GROUP BY players.name_first;
 			`)
 
@@ -647,7 +650,7 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int) ([]C
 				return nil, err
 			}
 
-			result, err = win_rate_query.Query(game,game,game,game,game)
+			result, err = win_rate_query.Query(game)
 
 			if err != nil {
 				return nil, err
@@ -656,34 +659,96 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int) ([]C
 		}
 
 	} else {
-		win_rate_query, err = db.Prepare(`
-		SELECT
-		players.name_first AS name,
-		CASE
-			WHEN (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $1)) > 0
-			THEN (COUNT(player_data.win) FILTER (WHERE player_data.win = true AND match_data.game_id = $2))::float / (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $3))::float
-			ELSE -1
-		END as win_rate,
-		CASE
-			WHEN (COUNT(player_data.win) FILTER (WHERE match_data.game_id = $4)) > 0
-			THEN AVG(player_data.score) FILTER (WHERE match_data.game_id = $5)
-			ELSE 0
-		END as average_score
-		FROM player_data
-		JOIN match_data ON match_data.id = player_data.match_id
-		JOIN players ON players.id = player_data.player_id
-		WHERE match_data.player_count = $6
-		GROUP BY players.name_first;
-		`)
+		if round > 0 {
+			win_rate_query, err = db.Prepare(`
+			SELECT
+			players.name_first AS name,
+			CASE
+				WHEN (COUNT(player_data.win)) > 0
+				THEN (COUNT(player_data.win) FILTER (WHERE player_data.win = true))::float / (COUNT(player_data.win))::float
+				ELSE -1
+			END as win_rate,
+			CASE
+				WHEN (COUNT(player_data.win)) > 0
+				THEN AVG(player_data.score)
+				ELSE 0
+			END as average_score
+			FROM player_data
+			JOIN match_data ON match_data.id = player_data.match_id
+			JOIN players ON players.id = player_data.player_id
+			WHERE match_data.game_id = $1 AND match_data.player_count = $2 AND player_data.round_number = $3
+			GROUP BY players.name_first;
+			`)
 
-		if err != nil {
-			return nil, err
-		}
+			if err != nil {
+				return nil, err
+			}
 
-		result, err = win_rate_query.Query(game,game,game,game,game,player_count)
+			result, err = win_rate_query.Query(game,player_count,round)
 
-		if err != nil {
-			return nil, err
+			if err != nil {
+				return nil, err
+			}
+		} else if round < 0 {
+			win_rate_query, err = db.Prepare(`
+			SELECT
+			players.name_first AS name,
+			CASE
+				WHEN (COUNT(player_data.win)) > 0
+				THEN (COUNT(player_data.win) FILTER (WHERE player_data.win = true))::float / (COUNT(player_data.win))::float
+				ELSE -1
+			END as win_rate,
+			CASE
+				WHEN (COUNT(player_data.win)) > 0
+				THEN AVG(player_data.score)
+				ELSE 0
+			END as average_score
+			FROM player_data
+			JOIN match_data ON match_data.id = player_data.match_id
+			JOIN players ON players.id = player_data.player_id
+			WHERE match_data.game_id = $1 AND match_data.player_count = $2 AND player_data.round_number = match_data.round_count
+			GROUP BY players.name_first;
+			`)
+
+			if err != nil {
+				return nil, err
+			}
+
+			result, err = win_rate_query.Query(game,player_count)
+
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			win_rate_query, err = db.Prepare(`
+			SELECT
+			players.name_first AS name,
+			CASE
+				WHEN (COUNT(player_data.win)) > 0
+				THEN (COUNT(player_data.win) FILTER (WHERE player_data.win = true))::float / (COUNT(player_data.win))::float
+				ELSE -1
+			END as win_rate,
+			CASE
+				WHEN (COUNT(player_data.win)) > 0
+				THEN AVG(player_data.score)
+				ELSE 0
+			END as average_score
+			FROM player_data
+			JOIN match_data ON match_data.id = player_data.match_id
+			JOIN players ON players.id = player_data.player_id
+			WHERE match_data.game_id = $1 AND match_data.player_count = $2
+			GROUP BY players.name_first;
+			`)
+
+			if err != nil {
+				return nil, err
+			}
+
+			result, err = win_rate_query.Query(game,player_count)
+
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
