@@ -543,7 +543,7 @@ func Query_games_all (config Settings) ([]Games, error) {
 }
 
 
-func Query_win_rate (config Settings,game uint,player_count uint,round int) ([]Collated_player_stats, error) {
+func Query_win_rate (config Settings,game uint,player_count uint,round int,culprit uint) ([]Collated_player_stats, error) {
 	var (
 		win_rate_query *sql.Stmt
 		stats Collated_player_stats
@@ -583,67 +583,129 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int) ([]C
 		GROUP BY players.name_first
 		ORDER BY win_rate DESC;
 	`
+	if culprit == 0 {
+		if player_count == 0 {
+			switch {
+			case round > 0:
+				win_rate_query, err = db.Prepare(query_start + `WHERE match_data.game_id = $1 AND player_data.round_number = $2` + query_end)
 
-	if player_count == 0 {
-		switch {
-		case round > 0:
-			
-			win_rate_query, err = db.Prepare(query_start + `WHERE match_data.game_id = $1 AND player_data.round_number = $2` + query_end)
+				if err != nil {
+					return nil, err
+				}
 
-			if err != nil {
-				return nil, err
+				result, err = win_rate_query.Query(game,round)
+
+			case round < 0:
+				win_rate_query, err = db.Prepare(query_start + `WHERE player_data.round_number = match_data.round_count AND match_data.game_id = $1` + query_end)
+
+				if err != nil {
+					return nil, err
+				}
+
+				result, err = win_rate_query.Query(game)
+
+			default:
+				win_rate_query, err = db.Prepare(query_start + `WHERE match_data.game_id = $1` + query_end)
+
+				if err != nil {
+					return nil, err
+				}
+
+				result, err = win_rate_query.Query(game)
+
 			}
+		} else {
+			switch {
+			case round > 0:
+				win_rate_query, err = db.Prepare(query_start + `WHERE match_data.game_id = $1 AND match_data.player_count = $2 AND player_data.round_number = $3` + query_end)
 
-			result, err = win_rate_query.Query(game,round)
+				if err != nil {
+					return nil, err
+				}
 
-		case round < 0:
-			win_rate_query, err = db.Prepare(query_start + `WHERE player_data.round_number = match_data.round_count AND match_data.game_id = $1` + query_end)
+				result, err = win_rate_query.Query(game,player_count,round)
 
-			if err != nil {
-				return nil, err
+			case round < 0:
+				win_rate_query, err = db.Prepare(query_start + `WHERE match_data.game_id = $1 AND match_data.player_count = $2 AND player_data.round_number = match_data.round_count` + query_end)
+
+				if err != nil {
+					return nil, err
+				}
+
+				result, err = win_rate_query.Query(game,player_count)
+
+			default:
+				win_rate_query, err = db.Prepare(query_start + `WHERE match_data.game_id = $1 AND match_data.player_count = $2` + query_end)
+
+				if err != nil {
+					return nil, err
+				}
+
+				result, err = win_rate_query.Query(game,player_count)
+
 			}
-
-			result, err = win_rate_query.Query(game)
-
-		default:
-			win_rate_query, err = db.Prepare(query_start + `WHERE match_data.game_id = $1` + query_end)
-
-			if err != nil {
-				return nil, err
-			}
-
-			result, err = win_rate_query.Query(game)
-
 		}
 	} else {
-		switch {
-		case round > 0:
-			win_rate_query, err = db.Prepare(query_start + `WHERE match_data.game_id = $1 AND match_data.player_count = $2 AND player_data.round_number = $3` + query_end)
+		if player_count == 0 {
+			switch {
+			case round > 0:
+				win_rate_query, err = db.Prepare(query_start + `WHERE match_data.game_id = $1 AND player_data.round_number = $2 AND match_data.id IN (SELECT match_id FROM player_data WHERE player_id = $3)` + query_end)
 
-			if err != nil {
-				return nil, err
+				if err != nil {
+					return nil, err
+				}
+
+				result, err = win_rate_query.Query(game,round,culprit)
+
+			case round < 0:
+				win_rate_query, err = db.Prepare(query_start + `WHERE player_data.round_number = match_data.round_count AND match_data.game_id = $1 AND match_data.id IN (SELECT match_id FROM player_data WHERE player_id = $2)` + query_end)
+
+				if err != nil {
+					return nil, err
+				}
+
+				result, err = win_rate_query.Query(game,culprit)
+
+			default:
+				win_rate_query, err = db.Prepare(query_start + `WHERE match_data.game_id = $1 AND match_data.id IN (SELECT match_id FROM player_data WHERE player_id = $2)` + query_end)
+
+				if err != nil {
+					return nil, err
+				}
+
+				result, err = win_rate_query.Query(game,culprit)
+
 			}
+		} else {
+			switch {
+			case round > 0:
+				win_rate_query, err = db.Prepare(query_start + `WHERE match_data.game_id = $1 AND match_data.player_count = $2 AND player_data.round_number = $3 AND match_data.id IN (SELECT match_id FROM player_data WHERE player_id = $4)` + query_end)
 
-			result, err = win_rate_query.Query(game,player_count,round)
+				if err != nil {
+					return nil, err
+				}
 
-		case round < 0:
-			win_rate_query, err = db.Prepare(query_start + `WHERE match_data.game_id = $1 AND match_data.player_count = $2 AND player_data.round_number = match_data.round_count` + query_end)
+				result, err = win_rate_query.Query(game,player_count,round,culprit)
 
-			if err != nil {
-				return nil, err
+			case round < 0:
+				win_rate_query, err = db.Prepare(query_start + `WHERE match_data.game_id = $1 AND match_data.player_count = $2 AND player_data.round_number = match_data.round_count AND match_data.id IN (SELECT match_id FROM player_data WHERE player_id = $3)` + query_end)
+
+				if err != nil {
+					return nil, err
+				}
+
+				result, err = win_rate_query.Query(game,player_count,culprit)
+
+			default:
+				win_rate_query, err = db.Prepare(query_start + `WHERE match_data.game_id = $1 AND match_data.player_count = $2 AND match_data.id IN (SELECT match_id FROM player_data WHERE player_id = $3)` + query_end)
+
+				if err != nil {
+					return nil, err
+				}
+
+				result, err = win_rate_query.Query(game,player_count,culprit)
+
 			}
-
-			result, err = win_rate_query.Query(game,player_count)
-
-		default:
-			win_rate_query, err = db.Prepare(query_start + `WHERE match_data.game_id = $1 AND match_data.player_count = $2` + query_end)
-
-			if err != nil {
-				return nil, err
-			}
-
-			result, err = win_rate_query.Query(game,player_count)
-
 		}
 	}
 
