@@ -585,7 +585,8 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int) ([]C
 	`
 
 	if player_count == 0 {
-		if round > 0 {
+		switch {
+		case round > 0:
 			
 			win_rate_query, err = db.Prepare(query_start + `WHERE match_data.game_id = $1 AND player_data.round_number = $2` + query_end)
 
@@ -595,7 +596,7 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int) ([]C
 
 			result, err = win_rate_query.Query(game,round)
 
-		} else if round < 0 {
+		case round < 0:
 			win_rate_query, err = db.Prepare(query_start + `WHERE player_data.round_number = match_data.round_count AND match_data.game_id = $1` + query_end)
 
 			if err != nil {
@@ -604,7 +605,7 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int) ([]C
 
 			result, err = win_rate_query.Query(game)
 
-		} else {
+		default:
 			win_rate_query, err = db.Prepare(query_start + `WHERE match_data.game_id = $1` + query_end)
 
 			if err != nil {
@@ -614,9 +615,9 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int) ([]C
 			result, err = win_rate_query.Query(game)
 
 		}
-
 	} else {
-		if round > 0 {
+		switch {
+		case round > 0:
 			win_rate_query, err = db.Prepare(query_start + `WHERE match_data.game_id = $1 AND match_data.player_count = $2 AND player_data.round_number = $3` + query_end)
 
 			if err != nil {
@@ -625,10 +626,7 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int) ([]C
 
 			result, err = win_rate_query.Query(game,player_count,round)
 
-			if err != nil {
-				return nil, err
-			}
-		} else if round < 0 {
+		case round < 0:
 			win_rate_query, err = db.Prepare(query_start + `WHERE match_data.game_id = $1 AND match_data.player_count = $2 AND player_data.round_number = match_data.round_count` + query_end)
 
 			if err != nil {
@@ -637,7 +635,7 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int) ([]C
 
 			result, err = win_rate_query.Query(game,player_count)
 
-		} else {
+		default:
 			win_rate_query, err = db.Prepare(query_start + `WHERE match_data.game_id = $1 AND match_data.player_count = $2` + query_end)
 
 			if err != nil {
