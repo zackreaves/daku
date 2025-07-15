@@ -581,7 +581,8 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int) ([]C
 			JOIN match_data ON match_data.id = player_data.match_id
 			JOIN players ON players.id = player_data.player_id
 			WHERE match_data.game_id = $1 AND player_data.round_number = $2
-			GROUP BY players.name_first;
+			GROUP BY players.name_first
+			ORDER BY win_rate DESC;
 			`)
 
 			if err != nil {
@@ -612,7 +613,8 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int) ([]C
 			JOIN match_data ON match_data.id = player_data.match_id
 			JOIN players ON players.id = player_data.player_id
 			WHERE player_data.round_number = match_data.round_count AND match_data.game_id = $1
-			GROUP BY players.name_first;
+			GROUP BY players.name_first
+			ORDER BY win_rate DESC;
 			`)
 
 			if err != nil {
@@ -643,7 +645,8 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int) ([]C
 			JOIN match_data ON match_data.id = player_data.match_id
 			JOIN players ON players.id = player_data.player_id
 			WHERE match_data.game_id = $1
-			GROUP BY players.name_first;
+			GROUP BY players.name_first
+			ORDER BY win_rate DESC;
 			`)
 
 			if err != nil {
@@ -677,7 +680,8 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int) ([]C
 			JOIN match_data ON match_data.id = player_data.match_id
 			JOIN players ON players.id = player_data.player_id
 			WHERE match_data.game_id = $1 AND match_data.player_count = $2 AND player_data.round_number = $3
-			GROUP BY players.name_first;
+			GROUP BY players.name_first
+			ORDER BY win_rate DESC;
 			`)
 
 			if err != nil {
@@ -707,7 +711,8 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int) ([]C
 			JOIN match_data ON match_data.id = player_data.match_id
 			JOIN players ON players.id = player_data.player_id
 			WHERE match_data.game_id = $1 AND match_data.player_count = $2 AND player_data.round_number = match_data.round_count
-			GROUP BY players.name_first;
+			GROUP BY players.name_first
+			ORDER BY win_rate DESC;
 			`)
 
 			if err != nil {
@@ -737,7 +742,8 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int) ([]C
 			JOIN match_data ON match_data.id = player_data.match_id
 			JOIN players ON players.id = player_data.player_id
 			WHERE match_data.game_id = $1 AND match_data.player_count = $2
-			GROUP BY players.name_first;
+			GROUP BY players.name_first
+			ORDER BY win_rate DESC;
 			`)
 
 			if err != nil {
