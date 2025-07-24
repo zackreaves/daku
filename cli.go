@@ -74,11 +74,12 @@ func Cli () error {
 			return tui_arg(2)
 			}
 		} else {
-			fmt.Println("No argument given.")
-			fmt.Println("init - initialize database tables.")
-			fmt.Println("list {players,games,winrates game.id match_data.player_count} - lists players, games, and winrates")
-			fmt.Println("csv {table {players, games, match_data, player_data} csv_path, match match_data_path player_data_path} - imports data from csv, best to use match option.")
-			fmt.Println("tui - starts incomplete tui form.")
+			fmt.Println(`
+No argument given.
+init - initialize database tables.
+list {players,games,winrates game.id match_data.player_count} - lists players, games, and winrates
+csv {table {players, games, match_data, player_data} csv_path, match match_data_path player_data_path} - imports data from csv, best to use match option.
+tui - starts incomplete tui form.`)
 		}
 	
 	return nil
