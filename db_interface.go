@@ -342,11 +342,11 @@ func Init (config Settings) error {
 
 		_, err_exec := db.Exec(`
 			CREATE TABLE IF NOT EXISTS "players" (
-				"id" SERIAL PRIMARY KEY,
+				"id" BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 				"name_first" VARCHAR(80)
 			);
 			CREATE TABLE IF NOT EXISTS "games" (
-				"id" SERIAL PRIMARY KEY,
+				"id" BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 				"name" VARCHAR(80),
 				"ties_possible" BOOLEAN,
 				"tie_breakers" BOOLEAN,
@@ -356,7 +356,7 @@ func Init (config Settings) error {
 				"dealers" BOOLEAN
 			);
 			CREATE TABLE IF NOT EXISTS "match_data" (
-				"id" SERIAL PRIMARY KEY, 
+				"id" BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 				"game_id" INTEGER REFERENCES games(id),
 				"round_count" INTEGER NOT NULL,
 				"player_count" INTEGER NOT NULL,
