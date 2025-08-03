@@ -588,22 +588,22 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int,culpr
 
 	if culprit > 0 {
 		query_placeholder++
-		query_meat = fmt.Sprint(query_meat,"AND match_data.id IN (SELECT match_id FROM player_data WHERE player_id = $", query_placeholder, ") ")
+		query_meat = fmt.Sprint(query_meat, "AND match_data.id IN (SELECT match_id FROM player_data WHERE player_id = $", query_placeholder, ") ")
 		query_vars = append(query_vars, culprit)
 	}
 
 	if player_count > 0 {
 		query_placeholder++
-		query_meat = fmt.Sprint(query_meat,"AND match_data.player_count = $", query_placeholder, " ")
+		query_meat = fmt.Sprint(query_meat, "AND match_data.player_count = $", query_placeholder, " ")
 		query_vars = append(query_vars, player_count)
 	}
 
 	if round > 0 {
 		query_placeholder++
-		query_meat = fmt.Sprint(query_meat,"AND match_data.round_count = $", query_placeholder, " ")
+		query_meat = fmt.Sprint(query_meat, "AND match_data.round_count = $", query_placeholder, " ")
 		query_vars = append(query_vars, round)
 	} else if round < 0 {
-		query_meat = fmt.Sprint(query_meat,"AND player_data.round_number = match_data.round_count ")
+		query_meat = fmt.Sprint(query_meat, "AND player_data.round_number = match_data.round_count ")
 	}
 
 	win_rate_query, err = db.Prepare(query_start + query_meat + query_end)
