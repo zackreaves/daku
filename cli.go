@@ -108,11 +108,11 @@ func list_arg (arg_start_point uint) error {
 		Print_game_list(game_list)
 	case "winrates":
 		game_id, player_num, round_num, culprit_num, _ := list_flags(os.Args[arg_start_point+1:])
-		win_rates, err := Query_win_rate(config,game_id,player_num,round_num,culprit_num)
+		win_rates, round_str, err := Query_win_rate(config,game_id,player_num,round_num,culprit_num)
 		if err != nil {
 			return err
 		}
-		Print_win_rate(win_rates)
+		Print_win_rate(win_rates,round_str)
 	}
 	return nil
 }

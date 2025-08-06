@@ -543,7 +543,7 @@ func Query_games_all (config Settings) ([]Games, error) {
 }
 
 
-func Query_win_rate (config Settings,game uint,player_count uint,round int,culprit uint) ([]Collated_player_stats, error) {
+func Query_win_rate (config Settings,game uint,player_count uint,round int,culprit uint) ([]Collated_player_stats, string, error) {
 	var (
 		win_rate_query *sql.Stmt
 		stats Collated_player_stats
@@ -552,12 +552,12 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int,culpr
 	)
 
 	if game == 0 {
-		return nil, fmt.Errorf("Choose game.")
+		return nil, "", fmt.Errorf("Choose game.")
 	}
 
 	db, err := sql.Open(config.db_driver,config.db_address)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	defer db.Close()
@@ -608,12 +608,38 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int,culpr
 
 	win_rate_query, err = db.Prepare(query_start + query_meat + query_end)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	result, err = win_rate_query.Query(query_vars...)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
+
+	round_str := func(round int) string {
+		if round == 0 {
+			return "All"
+		}
+
+		if round < 0 {
+			return "Last"
+		}
+
+		round_mod100 := round % 100
+		if round_mod100 == 11 || round_mod100 == 12 || round_mod100 == 13 {
+			return fmt.Sprint(round,"th")
+		}
+
+		switch round % 10 {
+		case 1:
+			return fmt.Sprint(round,"st")
+		case 2:
+			return fmt.Sprint(round,"nd")
+		case 3:
+			return fmt.Sprint(round,"rd")
+		default:
+			return fmt.Sprint(round,"th")
+		}
+	} (round)
 
 	defer result.Close()
 
@@ -621,17 +647,17 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int,culpr
 		err = result.Scan(&stats.name,&stats.win_rate,&stats.avg_score)
 
 		if err != nil {
-			return all_stats, err
+			return all_stats, round_str, err
 		}
 
 		all_stats = append(all_stats,stats)
 	}
 
-	return all_stats, nil
+	return all_stats, round_str, nil
 }
 
-func Print_win_rate (all_stats []Collated_player_stats) {
-	fmt.Println("Player: Win rate")
+func Print_win_rate (all_stats []Collated_player_stats, round_str string) {
+	fmt.Println("Player: Win rate || ", round_str, "Round")
 	for i := range len(all_stats) {
 		if all_stats[i].win_rate != -1 {
 			fmt.Printf("%s: %.2f%s -- %.2f points on average \n", all_stats[i].name, all_stats[i].win_rate * 100, "%",all_stats[i].avg_score)
