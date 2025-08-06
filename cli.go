@@ -108,7 +108,33 @@ func list_arg (arg_start_point uint) error {
 		Print_game_list(game_list)
 	case "winrates":
 		game_id, player_num, round_num, culprit_num, _ := list_flags(os.Args[arg_start_point+1:])
-		win_rates, round_str, err := Query_win_rate(config,game_id,player_num,round_num,culprit_num)
+		win_rates, err := Query_win_rate(config,game_id,player_num,round_num,culprit_num)
+		round_str := func(round int) string {
+			if round == 0 {
+				return "All"
+			}
+
+			if round < 0 {
+				return "Last"
+			}
+
+			round_mod100 := round % 100
+			if round_mod100 == 11 || round_mod100 == 12 || round_mod100 == 13 {
+				return fmt.Sprint(round,"th")
+			}
+
+			switch round % 10 {
+			case 1:
+				return fmt.Sprint(round,"st")
+			case 2:
+				return fmt.Sprint(round,"nd")
+			case 3:
+				return fmt.Sprint(round,"rd")
+			default:
+				return fmt.Sprint(round,"th")
+			}
+		} (round_num)
+
 		if err != nil {
 			return err
 		}
