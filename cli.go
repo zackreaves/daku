@@ -30,20 +30,20 @@ func (s *Settings ) flags (arguments []string) (error) {
 	return err
 }
 
-func list_flags (arguments []string) (uint, uint, int, uint, error) {
+func list_flags (arguments []string) (uint, uint, int, int, error) {
 	var (
 		list_flags *flag.FlagSet = flag.NewFlagSet("list_flags", flag.ExitOnError)
 		player_count uint
 		game_id uint
 		round int
 		db_address_override *string = list_flags.String("a","","Override environmental variable.")
-		culprit uint
+		culprit int
 	)
 
 	list_flags.UintVar(&game_id,"g",0,"Enter game id.")
 	list_flags.UintVar(&player_count,"c",0,"Enter number of players")
 	list_flags.IntVar(&round,"r",1,"Enter which round is of interest, 0 returns the aggregate and anything less returns the last round's values.")
-	list_flags.UintVar(&culprit,"w",0,"Include only games with this player involved.")
+	list_flags.IntVar(&culprit,"w",0,"Include only games with this player involved.")
 
 	err := list_flags.Parse(arguments)
 
@@ -108,7 +108,9 @@ func list_arg (arg_start_point uint) error {
 		Print_game_list(game_list)
 	case "winrates":
 		game_id, player_num, round_num, culprit_num, _ := list_flags(os.Args[arg_start_point+1:])
+
 		win_rates, err := Query_win_rate(config,game_id,player_num,round_num,culprit_num)
+
 		round_str := func(round int) string {
 			if round == 0 {
 				return "All"

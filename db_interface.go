@@ -543,7 +543,7 @@ func Query_games_all (config Settings) ([]Games, error) {
 }
 
 
-func Query_win_rate (config Settings,game uint,player_count uint,round int,culprit uint) ([]Collated_player_stats, error) {
+func Query_win_rate (config Settings,game uint,player_count uint,round int,culprit int) ([]Collated_player_stats, error) {
 	var (
 		win_rate_query *sql.Stmt
 		stats Collated_player_stats
@@ -589,6 +589,10 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int,culpr
 	if culprit > 0 {
 		query_placeholder++
 		query_meat = fmt.Sprint(query_meat, "AND match_data.id IN (SELECT match_id FROM player_data WHERE player_id = $", query_placeholder, ") ")
+		query_vars = append(query_vars, culprit)
+	} else if culprit < 0 {
+		query_placeholder++
+		query_meat = fmt.Sprint(query_meat, "AND match_data.id NOT IN (SELECT match_id FROM player_data WHERE player_id = $", query_placeholder, ") ")
 		query_vars = append(query_vars, culprit)
 	}
 
