@@ -619,7 +619,6 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int,culpr
 		return nil,  err
 	}
 
-
 	defer result.Close()
 
 	for result.Next() {	
@@ -636,6 +635,10 @@ func Query_win_rate (config Settings,game uint,player_count uint,round int,culpr
 }
 
 func Print_win_rate (all_stats []Collated_player_stats, round_str string) {
+	if len(all_stats) == 0 {
+		fmt.Println("No winrates available.")
+		return
+	}
 	fmt.Println("Player: Win rate ||", round_str, "Round")
 	for i := range len(all_stats) {
 		if all_stats[i].win_rate != -1 {
